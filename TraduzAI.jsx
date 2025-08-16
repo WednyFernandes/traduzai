@@ -101,12 +101,22 @@ function updateProgress(current, total) {
     progressText.text = 'Processando ' + current + ' de ' + total + '...';
 }
 
-// Função principal de processamento (em lotes) - OTIMIZADA PARA PCs FRACOS
+// Função principal de processamento (em lotes) - OTIMIZADA COM PROTEÇÃO ANTI-TRAVAMENTO
 function processSelectionAsync(sel, batchSize) {
     var total = sel.length;
     var i = 0;
     var variablesData = [];
+    var processStartTime = new Date().getTime();
+    var maxProcessingTime = 300000; // 5 minutos máximo
     cancelRequested = false;
+    
+    // Limite de objetos para evitar travamento
+    if (total > 100) {
+        if (!confirm("Você selecionou " + total + " objetos. Para PCs fracos, recomendamos processar no máximo 100 objetos por vez.\n\nDeseja continuar mesmo assim? (Pode travar)")) {
+            startBtn.enabled = true;
+            return;
+        }
+    }
     
     // OTIMIZAÇÕES MÁXIMAS DE PERFORMANCE PARA PC DE 8GB
     try {
@@ -127,6 +137,20 @@ function processSelectionAsync(sel, batchSize) {
     }
     
     function processBatch() {
+        // Verificação de timeout para evitar travamento
+        var currentTime = new Date().getTime();
+        if (currentTime - processStartTime > maxProcessingTime) {
+            progressText.text = 'Timeout - Processamento muito longo. Cancelado por segurança.';
+            startBtn.enabled = true;
+            cancelBtn.enabled = false;
+            try {
+                app.redraw();
+                app.preferences.setBooleanPreference("ShowRealTimeDrawing", true);
+            } catch (restoreError) {}
+            alert("Processamento cancelado por timeout (5 min). Tente processar menos objetos por vez.");
+            return;
+        }
+        
         if (cancelRequested) {
             progressText.text = 'Processamento cancelado.';
             startBtn.enabled = true;
@@ -145,15 +169,34 @@ function processSelectionAsync(sel, batchSize) {
         
         for (; i < batchEnd; i++) {
             try {
-                // Força garbage collection a cada 5 objetos para liberar memória
-                if (i % 5 === 0) {
+                // Verificação de segurança - objeto ainda existe?
+                if (!sel[i] || sel[i] === null) {
+                    progressText.text = 'Objeto ' + (i+1) + ' não encontrado. Pulando...';
+                    continue;
+                }
+                
+                // Força garbage collection a cada 3 objetos (mais frequente)
+                if (i % 3 === 0) {
                     $.gc();
+                    // Pequena pausa para permitir limpeza de memória
+                    $.sleep(10);
                 }
                 
                 // Limpa toda a seleção primeiro
-                app.activeDocument.selection = null;
-                // Seleciona apenas o objeto atual
-                sel[i].selected = true;
+                try {
+                    app.activeDocument.selection = null;
+                } catch (selError) {
+                    // Se não conseguir limpar seleção, pula este objeto
+                    continue;
+                }
+                
+                // Seleciona apenas o objeto atual com verificação
+                try {
+                    sel[i].selected = true;
+                } catch (selectError) {
+                    // Se não conseguir selecionar, pula este objeto
+                    continue;
+                }
                 
                 // Coleta dados ANTES (simplificado para economizar memória)
                 var objectData = {
@@ -162,16 +205,22 @@ function processSelectionAsync(sel, batchSize) {
                 };
                 
                 try {
-                    if (sel[i].typename === "TextFrame" && sel[i].contents) {
+                    if (sel[i] && sel[i].typename === "TextFrame" && sel[i].contents) {
                         objectData.originalText = String(sel[i].contents);
                     }
                 } catch (textError) {
                     objectData.originalText = "";
                 }
                 
-                // Aplica a ação IMEDIATAMENTE
-                app.doScript(actionNameField.text, actionSetField.text);
-                $.sleep(50); // Delay mínimo para aplicação da ação
+                // Aplica a ação IMEDIATAMENTE com timeout
+                try {
+                    app.doScript(actionNameField.text, actionSetField.text);
+                } catch (actionError) {
+                    // Se a ação falhar, registra erro e continua
+                    objectData.originalText = "Erro na ação: " + actionError;
+                }
+                
+                $.sleep(30); // Delay ainda menor para aplicação da ação
                 
                 // Coleta dados APÓS (simplificado)
                 var postObjectData = {
@@ -209,10 +258,17 @@ function processSelectionAsync(sel, batchSize) {
         }
         
         if (i < total) {
-            // Delay mínimo entre lotes para PCs fracos
-            $.sleep(200);
+            // Pausa mais longa entre lotes para dar "respiro" ao sistema
+            progressText.text = 'Pausando entre lotes... (' + i + '/' + total + ')';
+            $.sleep(300);
+            
             // Força garbage collection entre lotes
             $.gc();
+            
+            // Pausa adicional para sistemas muito fracos
+            $.sleep(100);
+            
+            // Continua processamento
             processBatch();
         } else {
             progressText.text = 'Processamento concluído!';
