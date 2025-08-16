@@ -88,7 +88,8 @@ Create an action with your desired name:
 
 ### Step 3: Usage with Modern Interface
 1. Open your Illustrator document
-2. Select multiple text objects you want to convert to variables
+2. **Ungroup objects** if necessary - text objects work best when ungrouped for individual processing
+3. Select multiple text objects you want to convert to variables
 3. Go to **File > Scripts > TraduzAI**
 4. **Configure settings** in the interface:
    - **Action Name**: Enter your action name (e.g., "setvar")
