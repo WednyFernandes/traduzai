@@ -1,4 +1,4 @@
-// IllustraVar - Adobe Illustrator Text Variables Automation
+// TraduzAI - Adobe Illustrator Text Variables Automation
 // Created by Wedny Fernandes - https://wednyfernandes.com.br
 // Version 1.0.0 - Brazilian Design Automation
 
@@ -27,6 +27,186 @@ var VARIABLE_PREFIX = "Variável"; // Português: "Variável" | English: "Variab
 // Español: ACTION_SET = "Acciones por defecto"
 // Français: ACTION_SET = "Actions par défaut"
 // =============================================================================
+
+// ===============================
+// INTERFACE SCRIPTUI
+// ===============================
+var win = new Window('dialog', 'TraduzAI - Wedny Fernandes');
+win.orientation = 'column';
+win.alignChildren = ['center', 'top'];
+win.spacing = 15;
+
+// Barra de progresso
+var progressBar = win.add('progressbar', undefined, 0, 100);
+progressBar.preferredSize.width = 350;
+var progressText = win.add('statictext', undefined, 'Aguardando início...');
+progressText.alignment = 'center';
+
+// Botão Start (maior e azul)
+var startBtn = win.add('button', undefined, 'START');
+startBtn.preferredSize.width = 200;
+startBtn.preferredSize.height = 40;
+startBtn.fillBrush = startBtn.graphics.newBrush(startBtn.graphics.BrushType.SOLID_COLOR, [0.2, 0.4, 0.8, 1]);
+
+// Botão cancelar
+var cancelBtn = win.add('button', undefined, 'Cancelar');
+cancelBtn.preferredSize.width = 120;
+cancelBtn.enabled = false;
+
+// Toggle para backup
+var backupGroup = win.add('group');
+backupGroup.orientation = 'row';
+backupGroup.alignment = 'center';
+var backupCheckbox = backupGroup.add('checkbox', undefined, 'Criar backup automático');
+backupCheckbox.value = true;
+
+// Separador
+var separator = win.add('panel');
+separator.preferredSize.height = 2;
+
+// Campos editáveis (seção configurações)
+var configTitle = win.add('statictext', undefined, 'Configurações Avançadas');
+configTitle.alignment = 'center';
+
+var actionNameGroup = win.add('group');
+actionNameGroup.add('statictext', undefined, 'Action Name:');
+var actionNameField = actionNameGroup.add('edittext', undefined, ACTION_NAME);
+actionNameField.characters = 20;
+
+var actionSetGroup = win.add('group');
+actionSetGroup.add('statictext', undefined, 'Action Set:');
+var actionSetField = actionSetGroup.add('edittext', undefined, ACTION_SET);
+actionSetField.characters = 20;
+
+var variablePrefixGroup = win.add('group');
+variablePrefixGroup.add('statictext', undefined, 'Variable Prefix:');
+var variablePrefixField = variablePrefixGroup.add('edittext', undefined, VARIABLE_PREFIX);
+variablePrefixField.characters = 20;
+
+// Separador
+var separator2 = win.add('panel');
+separator2.preferredSize.height = 2;
+
+// Créditos (no final)
+var credits = win.add('statictext', undefined, 'Desenvolvido por Wedny Fernandes - wednyfernandes.com.br');
+credits.alignment = 'center';
+credits.graphics.font = ScriptUI.newFont('dialog', 'ITALIC', 10);
+
+// Variável de controle de cancelamento
+var cancelRequested = false;
+
+// Função para atualizar progresso
+function updateProgress(current, total) {
+    progressBar.value = Math.round((current / total) * 100);
+    progressText.text = 'Processando ' + current + ' de ' + total + '...';
+}
+
+// Função principal de processamento (em lotes)
+function processSelectionAsync(sel, batchSize) {
+    var total = sel.length;
+    var i = 0;
+    var variablesData = [];
+    cancelRequested = false;
+
+    function processBatch() {
+        if (cancelRequested) {
+            progressText.text = 'Processamento cancelado.';
+            startBtn.enabled = true;
+            cancelBtn.enabled = false;
+            return;
+        }
+        var batchEnd = Math.min(i + batchSize, total);
+        for (; i < batchEnd; i++) {
+            try {
+                // Limpa toda a seleção primeiro
+                app.activeDocument.selection = null;
+                // Seleciona apenas o objeto atual
+                sel[i].selected = true;
+                var objectData = collectObjectData(sel[i], i+1);
+                app.doScript(actionNameField.text, actionSetField.text);
+                $.sleep(200);
+                var postObjectData = collectPostObjectData(sel[i], i+1);
+                variablesData.push({
+                    index: i+1,
+                    preData: objectData,
+                    postData: postObjectData
+                });
+                // Limpa a seleção novamente
+                app.activeDocument.selection = null;
+            } catch (e) {
+                try { app.activeDocument.selection = null; } catch (clearError) {}
+                variablesData.push({
+                    index: i+1,
+                    preData: { index: i+1, objectType: "Error", originalText: "Erro: " + e },
+                    postData: { currentText: "", hasVariables: false }
+                });
+            }
+            updateProgress(i + 1, total);
+        }
+        if (i < total) {
+            // Delay maior entre lotes e processa próximo lote
+            $.sleep(1000);
+            processBatch();
+        } else {
+            progressText.text = 'Processamento concluído!';
+            startBtn.enabled = true;
+            cancelBtn.enabled = false;
+            // Pergunta se deseja exportar CSV
+            var exportCSV = confirm("Processamento concluído! Ação '" + actionNameField.text + "' executada para " + total + " objetos.\n\nDeseja exportar um arquivo CSV com os dados das variáveis?");
+            if (exportCSV && variablesData.length > 0) {
+                exportVariablesToCSV(variablesData, variablePrefixField.text);
+            } else if (!exportCSV) {
+                alert("Processamento concluído sem exportação de CSV.");
+            } else {
+                alert("Nenhum dado de variável foi coletado para exportação.");
+            }
+        }
+    }
+    processBatch();
+}
+
+// Botão cancelar
+cancelBtn.onClick = function() {
+    cancelRequested = true;
+    cancelBtn.enabled = false;
+    startBtn.enabled = true;
+    progressText.text = 'Cancelamento solicitado...';
+};
+
+// Botão start
+startBtn.onClick = function() {
+    if (app.documents.length === 0) {
+        alert('Nenhum documento aberto.');
+        return;
+    }
+    var sel = app.selection;
+    if (!sel || sel.length === 0) {
+        alert('Por favor, selecione alguns objetos primeiro.');
+        return;
+    }
+    // Backup automático (apenas se ativado)
+    if (backupCheckbox.value) {
+        try {
+            var doc = app.activeDocument;
+            var originalPath = doc.fullName;
+            var backupPath = originalPath.parent + "/" + originalPath.name.replace(/\.ai$/i, "-backup.ai");
+            doc.saveAs(new File(backupPath));
+            alert("Backup salvo em: " + backupPath);
+        } catch (backupError) {
+            alert("Não foi possível salvar o backup automático: " + backupError);
+        }
+    }
+    startBtn.enabled = false;
+    cancelBtn.enabled = true;
+    cancelRequested = false;
+    updateProgress(0, sel.length);
+    processSelectionAsync(sel, 10);
+};
+
+// Mostrar interface
+win.show();
+
+// ===============================
 
 // Função para coletar dados do objeto de forma segura
 function collectObjectData(obj, index) {
@@ -100,7 +280,7 @@ function collectPostObjectData(obj, index) {
 }
 
 // Função para exportar dados para CSV no formato solicitado
-function exportVariablesToCSV(data) {
+function exportVariablesToCSV(data, variablePrefix) {
     try {
         // Solicita local para salvar o arquivo
         var saveFile = File.saveDialog("Salvar CSV de Variáveis", "*.csv");
@@ -139,7 +319,7 @@ function exportVariablesToCSV(data) {
                 var item = data[i];
                 
                 // Nome fixo da variável usando o prefixo configurado
-                variableNames.push('"' + VARIABLE_PREFIX + (i + 1) + '"');
+                variableNames.push('"' + variablePrefix + (i + 1) + '"');
                 
                 // Conteúdo: usa o texto após processamento (ou original se não houver)
                 var content = "";
@@ -185,78 +365,4 @@ function exportVariablesToCSV(data) {
     } catch (e) {
         alert("Erro ao exportar CSV: " + e);
     }
-}
-
-// CÓDIGO PRINCIPAL - SEM INTERFACE
-if (app.documents.length > 0) {
-    var sel = app.selection;
-    
-    if (sel.length > 0) {
-        // Array para armazenar dados das variáveis para CSV
-        var variablesData = [];
-        
-        // Limpa a seleção inicial
-        app.activeDocument.selection = null;
-        
-        // Processa cada objeto individualmente
-        for (var i = 0; i < sel.length; i++) {
-            try {
-                // Seleciona apenas o objeto atual
-                sel[i].selected = true;
-                
-                // Coleta dados básicos
-                var objectData = collectObjectData(sel[i], i+1);
-                
-                // Executa o macro configurado
-                app.doScript(ACTION_NAME, ACTION_SET);
-                
-                // Delay de 0.2 segundos para estabilizar
-                $.sleep(200);
-                
-                // Coleta dados após processamento
-                var postObjectData = collectPostObjectData(sel[i], i+1);
-                
-                // Adiciona os dados ao array
-                variablesData.push({
-                    index: i+1,
-                    preData: objectData,
-                    postData: postObjectData
-                });
-                
-                // Limpa a seleção
-                app.activeDocument.selection = null;
-                
-            } catch (e) {
-                // Em caso de erro, limpa seleção e continua
-                try {
-                    app.activeDocument.selection = null;
-                } catch (clearError) {
-                    // Ignora erro de limpeza
-                }
-                
-                // Adiciona dados de erro
-                variablesData.push({
-                    index: i+1,
-                    preData: { index: i+1, objectType: "Error", originalText: "Erro: " + e },
-                    postData: { currentText: "", hasVariables: false }
-                });
-            }
-        }
-        
-        // Pergunta se deseja exportar CSV
-        var exportCSV = confirm("Processamento concluído! Ação '" + ACTION_NAME + "' executada para " + sel.length + " objetos.\n\nDeseja exportar um arquivo CSV com os dados das variáveis?");
-        
-        if (exportCSV && variablesData.length > 0) {
-            exportVariablesToCSV(variablesData);
-        } else if (!exportCSV) {
-            alert("Processamento concluído sem exportação de CSV.");
-        } else {
-            alert("Nenhum dado de variável foi coletado para exportação.");
-        }
-        
-    } else {
-        alert("Por favor, selecione alguns objetos primeiro.");
-    }
-} else {
-    alert("Nenhum documento aberto.");
 }

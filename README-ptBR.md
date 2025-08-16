@@ -1,33 +1,50 @@
 # TraduzAI - Automação de Tradução para Adobe Illustrator
 
-**TraduzAI: Automatização para Criação de Variáveis de Texto e Exportação CSV no Adobe Illustrator - Ideal para Tradução de Documentos**
+**TraduzAI: Interface Moderna para Criação Automatizada de Variáveis de Texto e Exportação CSV - Perfeito para Fluxos de Tradução**
 
-*Criado por [Wedny Fernandes](https://wednyfernandes.com.br) - Especialista Brasileiro em Automação para Design*
+*Criado por [Wedny Fernandes](https://wednyfernandes.com.br) - Designer Gráfico e Desenvolvedor*
 
-Este script automatiza o processo de criação de variáveis de texto no Adobe Illustrator, aplicando uma ação personalizada a múltiplos objetos selecionados e exportando os resultados para CSV - perfeito para fluxos de trabalho de tradução e localização.
+Este script oferece uma interface gráfica moderna para automatizar o processo de criação de variáveis de texto no Adobe Illustrator. Com acompanhamento de progresso em tempo real, processamento em lotes e configurações personalizáveis, é a ferramenta perfeita para fluxos de trabalho de tradução e localização.
 
-## 🎯 Recursos
+> **Testado apenas na versão Adobe Illustrator 2025.**
 
-- **Processamento em Lote**: Aplica ação personalizada a múltiplos objetos de texto automaticamente
-- **Exportação CSV**: Exporta nomes das variáveis e conteúdo para formato CSV com codificação UTF-8
-- **Suporte para Tradução**: Ideal para preparar documentos para tradução em múltiplos idiomas
-- **Tratamento de Erros**: Sistema robusto de tratamento de erros com log detalhado
-- **Suporte UTF-8**: Suporte completo para acentos e caracteres especiais (ç, ã, é, etc.)
-- **Interface Simples**: Confirmações simples sem elementos de interface complexos
+## � Recursos da Interface Moderna
 
-## 🌍 Casos de Uso para Tradução
+- **🖥️ Interface Intuitiva**: Interface ScriptUI profissional com feedback em tempo real
+- **📊 Acompanhamento de Progresso**: Barra de progresso mostrando status em tempo real
+- **⏸️ Controle de Cancelamento**: Pare o processamento a qualquer momento
+- **💾 Backup Automático**: Criação opcional de backup antes do processamento
+- **⚙️ Configuração Dinâmica**: Edite nomes de ações e configurações diretamente na interface
+- **🎯 Processamento em Lotes**: Processa objetos em lotes otimizados de 10
+- **🔄 Delays Inteligentes**: Timing otimizado entre lotes para melhor performance
+
+## 🌍 Perfeito para Tradução e Localização
 
 - **Preparação de Documentos**: Converte textos estáticos em variáveis para facilitar tradução
 - **Localização de Materiais**: Prepara materiais de marketing para múltiplos mercados
 - **Fluxo de Tradução**: Exporta textos para tradutores em formato CSV organizado
 - **Reimportação**: Facilita a reimportação de textos traduzidos de volta ao Illustrator
 - **Controle de Versões**: Mantém controle sobre diferentes versões linguísticas
+- **Projetos Multilíngues**: Agiliza a criação de materiais de design multilíngues
+
+## 🎯 Recursos Principais
+
+- **Interface Moderna**: Interface ScriptUI limpa e profissional com acompanhamento de progresso
+- **Processamento em Lotes**: Processa objetos de texto em lotes otimizados para melhor performance
+- **Exportação CSV**: Exporta nomes das variáveis e conteúdo para formato CSV com codificação UTF-8
+- **Pronto para Tradução**: Ideal para preparar documentos para tradução em múltiplos idiomas
+- **Tratamento de Erros**: Sistema robusto de tratamento de erros com log detalhado e recuperação
+- **Suporte UTF-8**: Suporte completo para acentos e caracteres especiais (ç, ã, é, etc.)
+- **Backup Automático**: Backup automático opcional antes do processamento
+- **Configuração Dinâmica**: Edite configurações sem modificar o código do script
+- **Suporte a Cancelamento**: Pare o processamento a qualquer momento
+- **Otimizado para Performance**: Delays inteligentes e processamento em lotes para computadores mais fracos
 
 ## 📋 Requisitos
 
 ### Versões do Adobe Illustrator
-- ✅ **Adobe Illustrator 2023** (testado)
-- ✅ **Adobe Illustrator 2024** (testado)  
+- ⚠️ **Adobe Illustrator 2023** (pode funcionar, não testado)
+- ⚠️ **Adobe Illustrator 2024** (pode funcionar, não testado)
 - ✅ **Adobe Illustrator 2025** (testado)
 - ⚠️ **Adobe Illustrator 2022** (pode funcionar, não testado)
 - ❌ **Adobe Illustrator 2021 ou anterior** (não suportado)
@@ -41,26 +58,18 @@ Este script automatiza o processo de criação de variáveis de texto no Adobe I
 
 ## 🛠️ Instalação e Configuração
 
-### Passo 1: Configurar o Script
-**IMPORTANTE**: Antes de usar, você deve configurar o script para seu idioma e nome da ação.
+### Passo 1: Criar a Ação
+Crie uma ação com o nome desejado:
 
-1. Abra `CreateTextVariables.jsx` em um editor de texto
-2. No topo do arquivo, modifique estas variáveis:
-
-```javascript
-// Nome da ação que você criou para converter texto em variável
-var ACTION_NAME = "setvar";  // ← Altere para o nome da sua ação
-
-// Nome do conjunto de ações onde sua ação está localizada  
-var ACTION_SET = "Ações Padrão";    // ← Altere para o nome do seu conjunto
-
-// Prefixo para nomes das variáveis no CSV
-var VARIABLE_PREFIX = "Variável";  // ← Altere para seu idioma
-```
-
-**Nomes Comuns de Conjuntos de Ação por Idioma:**
-- **Português BR**: `"Ações Padrão"`
-- **Inglês**: `"Default Actions"`
+1. Abra o Adobe Illustrator
+2. Vá em **Janela > Ações** 
+3. Crie um novo conjunto de ações (se necessário)
+4. Crie uma nova ação (ex: "setvar")
+5. Grave os seguintes passos:
+   - Selecione um objeto de texto
+   - Vá em **Janela > Variáveis**
+   - Clique em "Tornar Texto Dinâmico" ou adicione o texto selecionado como variável
+   - Pare a gravação
 - **Espanhol**: `"Acciones por defecto"`
 - **Francês**: `"Actions par défaut"`
 - **Alemão**: `"Standard-Aktionen"`
@@ -95,14 +104,15 @@ Crie uma ação com o nome especificado em `ACTION_NAME`:
 
 O script gera um arquivo CSV com esta estrutura:
 
+> **Dica:** Cada nova tradução deve ser adicionada como uma nova linha abaixo da original, mantendo os cabeçalhos das colunas. Assim, cada versão de idioma fica organizada e fácil de localizar.
+
 ```csv
 "Variável1","Variável2","Variável3"
 "Conteúdo da variável 1","Conteúdo da variável 2","Conteúdo da variável 3"
+"Tradução 1","Tradução 2","Tradução 3"
+"Traducción 1","Traducción 2","Traducción 3"
 ```
 
-- **Linha 1**: Nomes fixos das variáveis (Variável1, Variável2, etc.)
-- **Linha 2**: Conteúdo real do texto dos seus objetos
-- **Codificação**: UTF-8 com BOM para máxima compatibilidade
 
 ## 🔄 Fluxo de Trabalho para Tradução
 
@@ -110,7 +120,12 @@ O script gera um arquivo CSV com esta estrutura:
 2. **Exportação**: Exporte CSV com textos originais
 3. **Tradução**: Envie CSV para tradutores
 4. **Organização**: Receba CSVs traduzidos organizados
-5. **Reimportação**: Use variáveis para atualizar documentos traduzidos
+5. **Traduza o CSV**: Utilize uma IA (ex: ChatGPT) para traduzir e localizar o CSV para o idioma desejado, mantendo a formatação das linhas. Exemplo de prompt:
+
+   > Traduza e localize o conteúdo CSV abaixo para [idioma alvo], mantendo exatamente a formatação das linhas do CSV enviado.
+
+6. **Carregar biblioteca de variáveis**: Carregue o CSV traduzido como biblioteca de variáveis e selecione o conjunto de dados desejado para o documento.
+7. **Reimportação**: Use variáveis para atualizar documentos traduzidos
 
 ## ⚠️ Problemas Conhecidos e Soluções
 
@@ -139,7 +154,7 @@ O script gera um arquivo CSV com esta estrutura:
 ## 🔧 Configuração
 
 ### Configuração de Idioma
-Edite as variáveis de configuração no topo de `CreateTextVariables.jsx`:
+Edite as variáveis de configuração no topo de `TraduzAI.jsx`:
 
 ```javascript
 // Nome da sua ação (deve corresponder exatamente)

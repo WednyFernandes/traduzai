@@ -1,10 +1,22 @@
 # TraduzAI - Adobe Illustrator Translation Automation
 
-**TraduzAI: Automated Text Variables Creation and CSV Export for Adobe Illustrator - Perfect for Document Translation Workflows**
+**TraduzAI: Modern Interface for Automated Text Variables Creation and CSV Export - Perfect for Document Translation Workflows**
 
-*Created by [Wedny Fernandes](https://wednyfernandes.com.br) - Brazilian Design Automation Specialist*
+*Created by [Wedny Fernandes](https://wednyfernandes.com.br) - Brazilian Graphic Designer and Developer*
 
-This script automates the process of creating text variables in Adobe Illustrator by applying a custom action to multiple selected objects and optionally exporting the results to a CSV file - ideal for translation and localization workflows.
+This script provides a modern graphical interface for automating the process of creating text variables in Adobe Illustrator. With real-time progress tracking, batch processing, and customizable settings, it's the perfect tool for translation and localization workflows.
+
+> **Tested only on Adobe Illustrator 2025.**
+
+## 🎨 Modern Interface Features
+
+- **🖥️ Intuitive GUI**: Professional ScriptUI interface with real-time feedback
+- **📊 Progress Tracking**: Live progress bar showing processing status
+- **⏸️ Cancellation Control**: Stop processing at any time with cancel button
+- **💾 Automatic Backup**: Optional backup creation before processing
+- **⚙️ Live Configuration**: Edit action names and settings directly in the interface
+- **🎯 Batch Processing**: Processes objects in optimized batches of 10
+- **🔄 Smart Delays**: Optimized timing between batches for better performance
 
 ## 🌍 Perfect for Translation & Localization
 
@@ -13,24 +25,26 @@ This script automates the process of creating text variables in Adobe Illustrato
 - **Translation Workflow**: Export texts to CSV format for translators
 - **Reimport Process**: Easily reimport translated texts back to Illustrator
 - **Version Control**: Maintain control over different language versions
-- **Batch Processing**: Handle multiple documents efficiently
 - **Multilingual Projects**: Streamline creation of multilingual design materials
 
-## 🎯 Features
+## 🎯 Core Features
 
-- **Batch Processing**: Apply custom action to multiple selected text objects automatically
+- **Modern Interface**: Clean, professional ScriptUI with progress tracking
+- **Batch Processing**: Processes text objects in optimized batches for better performance
 - **CSV Export**: Export variable names and content to CSV format with proper UTF-8 encoding
 - **Translation Ready**: Ideal for preparing documents for translation into multiple languages
-- **Error Handling**: Robust error handling with detailed logging
+- **Error Handling**: Robust error handling with detailed logging and recovery
 - **UTF-8 Support**: Full support for accents and special characters (ç, ã, é, ñ, ü, etc.)
-- **Clean Interface**: Simple confirmation dialogs without complex UI elements
-- **Customizable**: Easy configuration for different languages and workflows
+- **Automatic Backup**: Optional automatic backup before processing
+- **Live Configuration**: Edit settings without modifying script code
+- **Cancellation Support**: Stop processing at any time
+- **Performance Optimized**: Smart delays and batch processing for low-end computers
 
 ## 📋 Requirements
 
 ### Adobe Illustrator Versions
-- ✅ **Adobe Illustrator 2023** (tested)
-- ✅ **Adobe Illustrator 2024** (tested)  
+- ⚠️ **Adobe Illustrator 2023** (may work, not tested)
+- ⚠️ **Adobe Illustrator 2024** (may work, not tested)
 - ✅ **Adobe Illustrator 2025** (tested)
 - ⚠️ **Adobe Illustrator 2022** (may work, not tested)
 - ❌ **Adobe Illustrator 2021 or older** (not supported)
@@ -53,68 +67,65 @@ This script automates the process of creating text variables in Adobe Illustrato
 
 ## 🛠️ Installation & Setup
 
-### Step 1: Configure the Script
-**IMPORTANT**: Before using, you must configure the script for your language and action name.
-
-1. Open `CreateTextVariables.jsx` in a text editor
-2. At the top of the file, modify these variables:
-
-```javascript
-// Nome da ação que você criou para converter texto em variável
-var ACTION_NAME = "setvar";  // ← Change to your action name
-
-// Nome do conjunto de ações onde sua ação está localizada  
-var ACTION_SET = "Set 1";    // ← Change to your action set name
-
-// Prefixo para nomes das variáveis no CSV
-var VARIABLE_PREFIX = "Variável";  // ← Change to your language
-```
-
-**Common Action Set Names by Language:**
-- **Portuguese BR**: `"Ações Padrão"`
-- **English**: `"Default Actions"`
-- **Spanish**: `"Acciones por defecto"`
-- **French**: `"Actions par défaut"`
-- **German**: `"Standard-Aktionen"`
-
-### Step 2: Create the Action
-Create an action with the name you specified in `ACTION_NAME`:
+### Step 1: Create the Action
+Create an action with your desired name:
 
 1. Open Adobe Illustrator
 2. Go to **Window > Actions** 
-3. Create a new action set (if needed) matching your `ACTION_SET`
-4. Create a new action with your `ACTION_NAME`
+3. Create a new action set (if needed)
+4. Create a new action (e.g., "setvar")
 5. Record the following steps:
    - Select a text object
    - Go to **Window > Variables**
    - Click "Make Text Dynamic" or add the selected text as a variable
    - Stop recording
 
-### Step 3: Install the Script
-1. Download `CreateTextVariables.jsx`
+### Step 2: Install the Script
+1. Download `TraduzAI.jsx`
 2. Copy to your Illustrator Scripts folder:
    - **Windows**: `C:\Program Files\Adobe\Adobe Illustrator [Version]\Presets\[Language]\Scripts\`
    - **macOS**: `/Applications/Adobe Illustrator [Version]/Presets/[Language]/Scripts/`
 
-### Step 4: Usage
+### Step 3: Usage with Modern Interface
 1. Open your Illustrator document
 2. Select multiple text objects you want to convert to variables
-3. Go to **File > Scripts > CreateTextVariables**
-4. Confirm the processing
-5. Choose whether to export CSV when prompted
+3. Go to **File > Scripts > TraduzAI**
+4. **Configure settings** in the interface:
+   - **Action Name**: Enter your action name (e.g., "setvar")
+   - **Action Set**: Enter your action set name (varies by language)
+   - **Variable Prefix**: Choose your CSV column prefix (e.g., "Variable")
+   - **Backup Toggle**: Enable/disable automatic backup
+5. Click **START** to begin processing
+6. Monitor progress in real-time
+7. Use **Cancel** button if needed to stop processing
+8. Choose CSV export when processing completes
+
+### Step 4: Translation Workflow
+1. **Export CSV**: Export your processed variables to CSV format
+2. **Translate the CSV**: Use an AI (e.g., ChatGPT) to translate and localize the CSV for your target language, keeping the CSV line formatting. Example prompt:
+
+   > Translate and localize the following CSV content to [target language], keeping the CSV line formatting exactly as provided.
+
+3. **Load variable library**: Load the translated CSV as your variable library and select the desired dataset for your document.
+4. **Apply translations**: Use Illustrator's variables panel to apply translations
+
+   > Translate and localize the following CSV content to [target language], keeping the CSV line formatting exactly as provided.
+
+7. **Load variable library**: Load the translated CSV as your variable library and select the desired dataset for your document.
 
 ## 📊 CSV Output Format
 
 The script generates a CSV file with this structure:
 
+> **Tip:** Each new translation should be added as a new line below the original, keeping the column headers. This way, each language version stays organized and easy to locate.
+
 ```csv
 "Variável1","Variável2","Variável3"
 "Content of variable 1","Content of variable 2","Content of variable 3"
+"Translation 1","Translation 2","Translation 3"
+"Traducción 1","Traducción 2","Traducción 3"
 ```
 
-- **Line 1**: Fixed variable names (Variável1, Variável2, etc.)
-- **Line 2**: Actual text content from your objects
-- **Encoding**: UTF-8 with BOM for maximum compatibility
 
 ## ⚠️ Known Issues & Troubleshooting
 
