@@ -101,45 +101,92 @@ function updateProgress(current, total) {
     progressText.text = 'Processando ' + current + ' de ' + total + '...';
 }
 
-// Função principal de processamento (em lotes)
+// Função principal de processamento (em lotes) - OTIMIZADA PARA PCs FRACOS
 function processSelectionAsync(sel, batchSize) {
     var total = sel.length;
     var i = 0;
     var variablesData = [];
     cancelRequested = false;
     
-    // Desabilita redraw para melhor performance
-    app.redraw();
-    app.coordinateSystem = CoordinateSystem.ARTBOARDCOORDINATESYSTEM;
+    // OTIMIZAÇÕES MÁXIMAS DE PERFORMANCE PARA PC DE 8GB
+    try {
+        // Desabilita completamente o redraw e preview
+        app.redraw();
+        app.coordinateSystem = CoordinateSystem.ARTBOARDCOORDINATESYSTEM;
+        
+        // Força garbage collection antes de começar
+        $.gc();
+        
+        // Desabilita preview em tempo real se possível
+        try {
+            app.preferences.setBooleanPreference("ShowRealTimeDrawing", false);
+        } catch (prefError) {}
+        
+    } catch (perfError) {
+        // Ignora erros de otimização
+    }
     
     function processBatch() {
         if (cancelRequested) {
             progressText.text = 'Processamento cancelado.';
             startBtn.enabled = true;
             cancelBtn.enabled = false;
-            // Reabilita redraw
-            app.redraw();
+            // Reabilita redraw e restaura configurações
+            try {
+                app.redraw();
+                app.preferences.setBooleanPreference("ShowRealTimeDrawing", true);
+            } catch (restoreError) {}
             return;
         }
-        var batchEnd = Math.min(i + batchSize, total);
+        
+        // Lotes menores para PCs fracos (3 objetos por vez)
+        var actualBatchSize = Math.min(batchSize, 3);
+        var batchEnd = Math.min(i + actualBatchSize, total);
+        
         for (; i < batchEnd; i++) {
             try {
+                // Força garbage collection a cada 5 objetos para liberar memória
+                if (i % 5 === 0) {
+                    $.gc();
+                }
+                
                 // Limpa toda a seleção primeiro
                 app.activeDocument.selection = null;
                 // Seleciona apenas o objeto atual
                 sel[i].selected = true;
                 
-                // Coleta dados ANTES do processamento
-                var objectData = collectObjectData(sel[i], i+1);
+                // Coleta dados ANTES (simplificado para economizar memória)
+                var objectData = {
+                    index: i+1,
+                    originalText: ""
+                };
+                
+                try {
+                    if (sel[i].typename === "TextFrame" && sel[i].contents) {
+                        objectData.originalText = String(sel[i].contents);
+                    }
+                } catch (textError) {
+                    objectData.originalText = "";
+                }
                 
                 // Aplica a ação IMEDIATAMENTE
                 app.doScript(actionNameField.text, actionSetField.text);
-                $.sleep(100); // Delay menor para aplicação da ação
+                $.sleep(50); // Delay mínimo para aplicação da ação
                 
-                // Coleta dados APÓS o processamento
-                var postObjectData = collectPostObjectData(sel[i], i+1);
+                // Coleta dados APÓS (simplificado)
+                var postObjectData = {
+                    currentText: ""
+                };
                 
-                // Armazena os dados
+                try {
+                    if (sel[i].typename === "TextFrame" && sel[i].contents) {
+                        postObjectData.currentText = String(sel[i].contents);
+                    }
+                } catch (textError) {
+                    postObjectData.currentText = "";
+                }
+                
+                // Armazena os dados (estrutura simplificada)
                 variablesData.push({
                     index: i+1,
                     preData: objectData,
@@ -151,25 +198,33 @@ function processSelectionAsync(sel, batchSize) {
                 
             } catch (e) {
                 try { app.activeDocument.selection = null; } catch (clearError) {}
+                // Estrutura de erro simplificada
                 variablesData.push({
                     index: i+1,
-                    preData: { index: i+1, objectType: "Error", originalText: "Erro: " + e },
-                    postData: { currentText: "", hasVariables: false }
+                    preData: { index: i+1, originalText: "Erro: " + e },
+                    postData: { currentText: "" }
                 });
             }
             updateProgress(i + 1, total);
         }
+        
         if (i < total) {
-            // Delay maior entre lotes e processa próximo lote
-            $.sleep(500); // Delay reduzido para melhor performance
+            // Delay mínimo entre lotes para PCs fracos
+            $.sleep(200);
+            // Força garbage collection entre lotes
+            $.gc();
             processBatch();
         } else {
             progressText.text = 'Processamento concluído!';
             startBtn.enabled = true;
             cancelBtn.enabled = false;
             
-            // Reabilita redraw no final
-            app.redraw();
+            // Reabilita redraw e configurações no final
+            try {
+                app.redraw();
+                app.preferences.setBooleanPreference("ShowRealTimeDrawing", true);
+                $.gc(); // Limpeza final de memória
+            } catch (restoreError) {}
             
             // Pergunta se deseja exportar CSV
             var exportCSV = confirm("Processamento concluído! Ação '" + actionNameField.text + "' executada para " + total + " objetos.\n\nDeseja exportar um arquivo CSV com os dados das variáveis?");
@@ -220,7 +275,12 @@ startBtn.onClick = function() {
     cancelBtn.enabled = true;
     cancelRequested = false;
     updateProgress(0, sel.length);
-    processSelectionAsync(sel, 10);
+    
+    // Força garbage collection antes de começar
+    $.gc();
+    
+    // Lotes menores para PCs fracos (5 ao invés de 10)
+    processSelectionAsync(sel, 5);
 };
 
 // Mostrar interface
