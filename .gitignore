@@ -1,0 +1,23 @@
+# Adobe Illustrator Text Variables Automation
+
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.vscode/
+.idea/
+
+# Test files
+test_*.ai
+test_*.csv
+*.backup
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

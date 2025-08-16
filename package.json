@@ -1,0 +1,50 @@
+{
+  "name": "traduzai",
+  "version": "1.0.0", 
+  "description": "TraduzAI - Automated text variables creation and CSV export script for Adobe Illustrator with Brazilian design workflow focus",
+  "main": "CreateTextVariables.jsx",
+  "keywords": [
+    "traduzai",
+    "adobe-illustrator",
+    "text-variables", 
+    "translation-workflow",
+    "document-translation",
+    "multilingual-design",
+    "localization-tools",
+    "batch-processing",
+    "csv-export",
+    "design-automation",
+    "illustrator-scripts",
+    "jsx-script",
+    "translation-preparation",
+    "dynamic-text",
+    "variable-data",
+    "internationalization",
+    "i18n",
+    "design-workflow",
+    "marketing-localization",
+    "multilingual-campaigns",
+    "adobe-automation",
+    "brazilian-design",
+    "wedny-fernandes"
+  ],
+  "author": {
+    "name": "Wedny Fernandes",
+    "url": "https://wednyfernandes.com.br"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wednyfernandes/traduzai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wednyfernandes/traduzai/issues"
+  },
+  "homepage": "https://github.com/wednyfernandes/traduzai#readme",
+  "engines": {
+    "illustrator": ">=2023"
+  },
+  "scripts": {
+    "test": "echo \"No tests specified\""
+  }
+}
