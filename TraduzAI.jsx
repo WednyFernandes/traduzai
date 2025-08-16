@@ -107,12 +107,18 @@ function processSelectionAsync(sel, batchSize) {
     var i = 0;
     var variablesData = [];
     cancelRequested = false;
-
+    
+    // Desabilita redraw para melhor performance
+    app.redraw();
+    app.coordinateSystem = CoordinateSystem.ARTBOARDCOORDINATESYSTEM;
+    
     function processBatch() {
         if (cancelRequested) {
             progressText.text = 'Processamento cancelado.';
             startBtn.enabled = true;
             cancelBtn.enabled = false;
+            // Reabilita redraw
+            app.redraw();
             return;
         }
         var batchEnd = Math.min(i + batchSize, total);
@@ -122,17 +128,27 @@ function processSelectionAsync(sel, batchSize) {
                 app.activeDocument.selection = null;
                 // Seleciona apenas o objeto atual
                 sel[i].selected = true;
+                
+                // Coleta dados ANTES do processamento
                 var objectData = collectObjectData(sel[i], i+1);
+                
+                // Aplica a ação IMEDIATAMENTE
                 app.doScript(actionNameField.text, actionSetField.text);
-                $.sleep(200);
+                $.sleep(100); // Delay menor para aplicação da ação
+                
+                // Coleta dados APÓS o processamento
                 var postObjectData = collectPostObjectData(sel[i], i+1);
+                
+                // Armazena os dados
                 variablesData.push({
                     index: i+1,
                     preData: objectData,
                     postData: postObjectData
                 });
+                
                 // Limpa a seleção novamente
                 app.activeDocument.selection = null;
+                
             } catch (e) {
                 try { app.activeDocument.selection = null; } catch (clearError) {}
                 variablesData.push({
@@ -145,12 +161,16 @@ function processSelectionAsync(sel, batchSize) {
         }
         if (i < total) {
             // Delay maior entre lotes e processa próximo lote
-            $.sleep(1000);
+            $.sleep(500); // Delay reduzido para melhor performance
             processBatch();
         } else {
             progressText.text = 'Processamento concluído!';
             startBtn.enabled = true;
             cancelBtn.enabled = false;
+            
+            // Reabilita redraw no final
+            app.redraw();
+            
             // Pergunta se deseja exportar CSV
             var exportCSV = confirm("Processamento concluído! Ação '" + actionNameField.text + "' executada para " + total + " objetos.\n\nDeseja exportar um arquivo CSV com os dados das variáveis?");
             if (exportCSV && variablesData.length > 0) {

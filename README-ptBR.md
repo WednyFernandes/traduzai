@@ -97,7 +97,7 @@ Crie uma ação com o nome especificado em `ACTION_NAME`:
 1. Abra seu documento do Illustrator
 2. **Desagrupe objetos** se necessário - objetos de texto funcionam melhor quando desagrupados para processamento individual
 3. Selecione múltiplos objetos de texto que deseja converter em variáveis
-3. Vá em **Arquivo > Scripts > CreateTextVariables**
+3. Vá em **Arquivo > Scripts > TraduzAI**
 4. Confirme o processamento
 5. Escolha se deseja exportar CSV quando solicitado
 
