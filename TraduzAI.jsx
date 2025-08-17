@@ -112,7 +112,7 @@ function processSelectionAsync(sel, batchSize) {
     var i = 0;
     var variablesData = [];
     var processStartTime = new Date().getTime();
-    var maxProcessingTime = 300000; // 5 minutos máximo
+    var maxProcessingTime = 600000; // 10 minutos máximo (aumentado de 5)
     cancelRequested = false;
     
     // Limite de objetos para evitar travamento - MAIS RESTRITIVO
@@ -153,15 +153,27 @@ function processSelectionAsync(sel, batchSize) {
         // Verificação de timeout para evitar travamento
         var currentTime = new Date().getTime();
         if (currentTime - processStartTime > maxProcessingTime) {
-            progressText.text = 'Timeout - Processamento muito longo. Cancelado por segurança.';
-            startBtn.enabled = true;
-            cancelBtn.enabled = false;
-            try {
-                app.redraw();
-                app.preferences.setBooleanPreference("ShowRealTimeDrawing", true);
-            } catch (restoreError) {}
-            alert("Processamento cancelado por timeout (5 min). Tente processar menos objetos por vez.");
-            return;
+            progressText.text = 'Timeout detectado - Processamento longo em andamento...';
+            
+            // Confirmação antes de cancelar
+            var continueProcessing = confirm("O processamento está executando há mais de 10 minutos.\n\nProcessando objeto " + (i+1) + " de " + total + ".\n\nDeseja continuar processando? (Clique 'Cancelar' para interromper)");
+            
+            if (continueProcessing) {
+                // Usuário quer continuar - estende o timeout por mais 10 minutos
+                processStartTime = new Date().getTime();
+                progressText.text = 'Continuando processamento... (' + (i+1) + '/' + total + ')';
+            } else {
+                // Usuário quer cancelar
+                progressText.text = 'Processamento cancelado pelo usuário após timeout.';
+                startBtn.enabled = true;
+                cancelBtn.enabled = false;
+                try {
+                    app.redraw();
+                    app.preferences.setBooleanPreference("ShowRealTimeDrawing", true);
+                } catch (restoreError) {}
+                alert("Processamento cancelado após 10+ minutos.\n\nForam processados " + i + " de " + total + " objetos.");
+                return;
+            }
         }
         
         if (cancelRequested) {
