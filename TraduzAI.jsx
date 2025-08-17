@@ -53,6 +53,11 @@ var cancelBtn = win.add('button', undefined, 'Cancelar');
 cancelBtn.preferredSize.width = 120;
 cancelBtn.enabled = false;
 
+// Botão para exportar CSV das variáveis existentes
+var exportBtn = win.add('button', undefined, 'Exportar CSV Existente');
+exportBtn.preferredSize.width = 180;
+exportBtn.alignment = 'center';
+
 // Toggle para backup
 var backupGroup = win.add('group');
 backupGroup.orientation = 'row';
@@ -304,6 +309,45 @@ cancelBtn.onClick = function() {
     progressText.text = 'Cancelamento solicitado...';
 };
 
+// Função para exportar variáveis já existentes no documento
+function exportExistingVariables() {
+    try {
+        if (app.documents.length === 0) {
+            alert('Nenhum documento aberto.');
+            return;
+        }
+        
+        var doc = app.activeDocument;
+        var variables = doc.variables;
+        
+        if (variables.length === 0) {
+            alert('Nenhuma variável encontrada no documento atual.');
+            return;
+        }
+        
+        // Cria dados simulados das variáveis existentes
+        var variablesData = [];
+        for (var i = 0; i < variables.length; i++) {
+            var variable = variables[i];
+            variablesData.push({
+                index: i + 1,
+                preData: { originalText: variable.name },
+                postData: { currentText: variable.name }
+            });
+        }
+        
+        exportVariablesToCSV(variablesData, variablePrefixField.text);
+        
+    } catch (e) {
+        alert('Erro ao exportar variáveis existentes: ' + e);
+    }
+}
+
+// Botão exportar CSV existente
+exportBtn.onClick = function() {
+    exportExistingVariables();
+};
+
 // Botão start
 startBtn.onClick = function() {
     if (app.documents.length === 0) {
@@ -434,17 +478,21 @@ function exportVariablesToCSV(data, variablePrefix) {
             var variableNames = [];
             var variableContents = [];
             
-            // Função para limpar e formatar texto para CSV preservando acentos
+            // Função para limpar e formatar texto para CSV preservando acentos E QUEBRAS DE LINHA
             function formatForCSV(text) {
                 if (!text) return '""';
                 // Converte para string se necessário
                 text = String(text);
-                // Remove apenas quebras de linha, preserva todos os outros caracteres
-                text = text.replace(/[\r\n\t]/g, " ");
-                // Remove espaços duplos
-                text = text.replace(/\s+/g, " ");
-                // Remove espaços no início e fim
-                text = text.replace(/^\s+|\s+$/g, "");
+                // PRESERVA quebras de linha convertendo para \n
+                text = text.replace(/\r\n/g, "\\n"); // Windows line breaks
+                text = text.replace(/\r/g, "\\n");   // Mac line breaks  
+                text = text.replace(/\n/g, "\\n");   // Unix line breaks
+                // Remove tabs mas preserva quebras de linha
+                text = text.replace(/\t/g, " ");
+                // Remove espaços duplos mas preserva quebras de linha
+                text = text.replace(/ +/g, " ");
+                // Remove espaços no início e fim de cada linha
+                text = text.replace(/^ +| +$/gm, "");
                 // Escapa aspas duplas duplicando-as (padrão CSV)
                 text = text.replace(/"/g, '""');
                 return '"' + text + '"'; // Envolve em aspas duplas
