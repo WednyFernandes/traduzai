@@ -115,9 +115,17 @@ function processSelectionAsync(sel, batchSize) {
     var maxProcessingTime = 300000; // 5 minutos máximo
     cancelRequested = false;
     
-    // Limite de objetos para evitar travamento
+    // Limite de objetos para evitar travamento - MAIS RESTRITIVO
+    if (total > 50) {
+        if (!confirm("Você selecionou " + total + " objetos. Para máquinas fracas, o limite recomendado é 50 objetos.\n\nProcessar muitos objetos pode causar travamento. Continuar?")) {
+            startBtn.enabled = true;
+            return;
+        }
+    }
+    
+    // Aviso adicional para muitos objetos
     if (total > 100) {
-        if (!confirm("Você selecionou " + total + " objetos. Para PCs fracos, recomendamos processar no máximo 100 objetos por vez.\n\nDeseja continuar mesmo assim? (Pode travar)")) {
+        if (!confirm("ATENÇÃO: " + total + " objetos é um número muito alto!\n\nRecomendamos processar no máximo 50 por vez em máquinas fracas.\n\nTem certeza que deseja continuar?")) {
             startBtn.enabled = true;
             return;
         }
@@ -168,8 +176,8 @@ function processSelectionAsync(sel, batchSize) {
             return;
         }
         
-        // Lotes menores para PCs fracos (3 objetos por vez)
-        var actualBatchSize = Math.min(batchSize, 3);
+        // Lotes menores para PCs fracos (2 objetos por vez - ULTRA CONSERVADOR)
+        var actualBatchSize = Math.min(batchSize, 2);
         var batchEnd = Math.min(i + actualBatchSize, total);
         
         for (; i < batchEnd; i++) {
@@ -180,12 +188,11 @@ function processSelectionAsync(sel, batchSize) {
                     continue;
                 }
                 
-                // Força garbage collection a cada 3 objetos (mais frequente)
-                if (i % 3 === 0) {
-                    $.gc();
-                    // Pequena pausa para permitir limpeza de memória
-                    $.sleep(10);
-                }
+                // Força garbage collection a cada objeto (MÁXIMA FREQUÊNCIA)
+                $.gc(); $.gc();
+                
+                // Pausa maior para dar mais respiro ao sistema
+                $.sleep(50);
                 
                 // Limpa toda a seleção primeiro
                 try {
@@ -203,7 +210,7 @@ function processSelectionAsync(sel, batchSize) {
                     continue;
                 }
                 
-                // Coleta dados ANTES (simplificado para economizar memória)
+                // Coleta dados ANTES (estrutura mínima)
                 var objectData = {
                     index: i+1,
                     originalText: ""
@@ -211,36 +218,45 @@ function processSelectionAsync(sel, batchSize) {
                 
                 try {
                     if (sel[i] && sel[i].typename === "TextFrame" && sel[i].contents) {
-                        objectData.originalText = String(sel[i].contents);
+                        var textContent = String(sel[i].contents);
+                        // Limita tamanho do texto para economizar memória
+                        if (textContent.length > 300) {
+                            textContent = textContent.substring(0, 300) + "...";
+                        }
+                        objectData.originalText = textContent;
                     }
                 } catch (textError) {
                     objectData.originalText = "";
                 }
                 
-                // Aplica a ação IMEDIATAMENTE com timeout
+                // Aplica a ação com timeout maior
                 try {
                     app.doScript(actionNameField.text, actionSetField.text);
                 } catch (actionError) {
-                    // Se a ação falhar, registra erro e continua
                     objectData.originalText = "Erro na ação: " + actionError;
                 }
                 
-                $.sleep(30); // Delay ainda menor para aplicação da ação
+                $.sleep(100); // Pausa muito maior após ação
                 
-                // Coleta dados APÓS (simplificado)
+                // Coleta dados APÓS (estrutura mínima)
                 var postObjectData = {
                     currentText: ""
                 };
                 
                 try {
                     if (sel[i].typename === "TextFrame" && sel[i].contents) {
-                        postObjectData.currentText = String(sel[i].contents);
+                        var postTextContent = String(sel[i].contents);
+                        // Limita tamanho do texto
+                        if (postTextContent.length > 300) {
+                            postTextContent = postTextContent.substring(0, 300) + "...";
+                        }
+                        postObjectData.currentText = postTextContent;
                     }
                 } catch (textError) {
                     postObjectData.currentText = "";
                 }
                 
-                // Armazena os dados (estrutura simplificada)
+                // Armazena os dados (estrutura ultra-simplificada)
                 variablesData.push({
                     index: i+1,
                     preData: objectData,
@@ -263,15 +279,18 @@ function processSelectionAsync(sel, batchSize) {
         }
         
         if (i < total) {
-            // Pausa mais longa entre lotes para dar "respiro" ao sistema
+            // Pausa muito longa entre lotes para dar "respiro" máximo ao sistema
             progressText.text = 'Pausando entre lotes... (' + i + '/' + total + ')';
-            $.sleep(300);
+            $.sleep(500); // Pausa muito maior
             
-            // Força garbage collection entre lotes
-            $.gc();
+            // Força garbage collection múltipla entre lotes
+            $.gc(); $.gc(); $.gc();
             
-            // Pausa adicional para sistemas muito fracos
-            $.sleep(100);
+            // Pausa adicional para sistemas ultra-fracos
+            $.sleep(200);
+            
+            // Força redraw para mostrar que não travou
+            app.redraw();
             
             // Continua processamento
             processBatch();
@@ -290,7 +309,7 @@ function processSelectionAsync(sel, batchSize) {
             // Pergunta se deseja exportar CSV
             var exportCSV = confirm("Processamento concluído! Ação '" + actionNameField.text + "' executada para " + total + " objetos.\n\nDeseja exportar um arquivo CSV com os dados das variáveis?");
             if (exportCSV && variablesData.length > 0) {
-                exportVariablesToCSV(variablesData, variablePrefixField.text);
+                exportVariablesToCSVSafe(variablesData, variablePrefixField.text);
             } else if (!exportCSV) {
                 alert("Processamento concluído sem exportação de CSV.");
             } else {
@@ -309,9 +328,12 @@ cancelBtn.onClick = function() {
     progressText.text = 'Cancelamento solicitado...';
 };
 
-// Função para exportar variáveis já existentes no documento
+// Função para exportar variáveis já existentes no documento - SUPER OTIMIZADA PARA MÁQUINAS FRACAS
 function exportExistingVariables() {
     try {
+        // Múltiplas limpezas de memória aggressivas
+        $.gc(); $.gc(); $.gc();
+        
         if (app.documents.length === 0) {
             alert('Nenhum documento aberto.');
             return;
@@ -325,27 +347,92 @@ function exportExistingVariables() {
             return;
         }
         
-        // Cria dados simulados das variáveis existentes
-        var variablesData = [];
-        for (var i = 0; i < variables.length; i++) {
-            var variable = variables[i];
-            variablesData.push({
-                index: i + 1,
-                preData: { originalText: variable.name },
-                postData: { currentText: variable.name }
-            });
+        // Limite muito restritivo para máquinas fracas
+        if (variables.length > 25) {
+            if (!confirm("Você tem " + variables.length + " variáveis. Para máquinas fracas, o limite recomendado é 25.\n\nProcessar todas pode causar travamento. Continuar?")) {
+                return;
+            }
         }
         
-        exportVariablesToCSV(variablesData, variablePrefixField.text);
+        // Processa em micro-lotes para evitar crash
+        var variablesData = [];
+        var maxVariables = Math.min(variables.length, 30); // Limite ultra-baixo
+        var processed = 0;
+        
+        // Processamento em chunks de 5 variáveis
+        for (var chunk = 0; chunk < Math.ceil(maxVariables / 5); chunk++) {
+            var startIdx = chunk * 5;
+            var endIdx = Math.min(startIdx + 5, maxVariables);
+            
+            // Processa chunk atual
+            for (var i = startIdx; i < endIdx; i++) {
+                try {
+                    var variable = variables[i];
+                    if (variable && variable.name) {
+                        // Estrutura mínima para economizar memória
+                        var varName = String(variable.name);
+                        variablesData.push({
+                            index: processed + 1,
+                            preData: { originalText: varName },
+                            postData: { currentText: varName }
+                        });
+                        processed++;
+                    }
+                } catch (varError) {
+                    // Falha silenciosa para não interromper
+                    continue;
+                }
+            }
+            
+            // Limpeza agressiva entre chunks
+            $.gc(); $.gc();
+            $.sleep(50); // Pausa maior para dar respiro ao sistema
+            
+            // Feedback visual para chunks grandes
+            if (maxVariables > 10) {
+                app.redraw(); // Força redraw para mostrar que não travou
+            }
+        }
+        
+        if (variablesData.length === 0) {
+            alert('Nenhuma variável válida encontrada para exportação.');
+            return;
+        }
+        
+        // Limpeza final brutal antes da exportação
+        $.gc(); $.gc(); $.gc();
+        $.sleep(100);
+        
+        exportVariablesToCSVSafe(variablesData, variablePrefixField.text);
         
     } catch (e) {
         alert('Erro ao exportar variáveis existentes: ' + e);
+        // Limpeza de emergência
+        try { $.gc(); $.gc(); $.gc(); } catch (gcError) {}
     }
 }
 
-// Botão exportar CSV existente
+// Botão exportar CSV existente - COM PROTEÇÃO EXTRA
 exportBtn.onClick = function() {
-    exportExistingVariables();
+    try {
+        // Desabilita botão para evitar duplo clique
+        exportBtn.enabled = false;
+        exportBtn.text = 'Processando...';
+        
+        // Pausa para interface se atualizar
+        $.sleep(100);
+        app.redraw();
+        
+        exportExistingVariables();
+        
+    } catch (btnError) {
+        alert('Erro no botão de exportação: ' + btnError);
+    } finally {
+        // Sempre reabilita o botão
+        exportBtn.enabled = true;
+        exportBtn.text = 'Exportar CSV Existente';
+        app.redraw();
+    }
 };
 
 // Botão start
@@ -376,11 +463,11 @@ startBtn.onClick = function() {
     cancelRequested = false;
     updateProgress(0, sel.length);
     
-    // Força garbage collection antes de começar
-    $.gc();
+    // Força garbage collection antes de começar (MÚLTIPLAS VEZES)
+    $.gc(); $.gc(); $.gc();
     
-    // Lotes menores para PCs fracos (5 ao invés de 10)
-    processSelectionAsync(sel, 5);
+    // Lotes ultra-pequenos para máquinas fracas (2 ao invés de 5)
+    processSelectionAsync(sel, 2);
 };
 
 // Mostrar interface
@@ -459,94 +546,128 @@ function collectPostObjectData(obj, index) {
     }
 }
 
-// Função para exportar dados para CSV no formato solicitado
-function exportVariablesToCSV(data, variablePrefix) {
+// Função para exportar dados para CSV no formato solicitado - VERSÃO SEGURA PARA MÁQUINAS FRACAS
+function exportVariablesToCSVSafe(data, variablePrefix) {
     try {
+        // Limpeza agressiva de memória antes de começar
+        $.gc(); $.gc(); $.gc();
+        
         // Solicita local para salvar o arquivo
         var saveFile = File.saveDialog("Salvar CSV de Variáveis", "*.csv");
         
-        if (saveFile) {
-            // Configura codificação UTF-8 com BOM para melhor compatibilidade
+        if (!saveFile) {
+            return; // Usuário cancelou
+        }
+        
+        // Processa em micro-lotes para evitar crash
+        var totalItems = data.length;
+        var processedItems = 0;
+        var chunkSize = 5; // Processa apenas 5 itens por vez
+        
+        // Arrays temporários pequenos
+        var csvLines = [];
+        var variableNames = [];
+        var variableContents = [];
+        
+        // Primeiro, cria apenas os nomes das variáveis (sem processar conteúdo)
+        for (var nameIdx = 0; nameIdx < totalItems; nameIdx++) {
+            variableNames.push('"' + variablePrefix + (nameIdx + 1) + '"');
+            
+            // Limpeza a cada 10 nomes
+            if (nameIdx % 10 === 0) {
+                $.gc();
+            }
+        }
+        
+        // Agora processa o conteúdo em chunks
+        for (var chunk = 0; chunk < Math.ceil(totalItems / chunkSize); chunk++) {
+            var startIdx = chunk * chunkSize;
+            var endIdx = Math.min(startIdx + chunkSize, totalItems);
+            
+            // Processa chunk atual
+            for (var i = startIdx; i < endIdx; i++) {
+                var item = data[i];
+                var content = "";
+                
+                try {
+                    // Obtém conteúdo de forma mais segura
+                    if (item && item.postData && item.postData.currentText) {
+                        content = String(item.postData.currentText);
+                    } else if (item && item.preData && item.preData.originalText) {
+                        content = String(item.preData.originalText);
+                    }
+                    
+                    // Formatação mais simples e rápida para CSV
+                    variableContents.push(formatForCSVSimple(content));
+                    
+                } catch (contentError) {
+                    // Em caso de erro, adiciona campo vazio
+                    variableContents.push('""');
+                }
+            }
+            
+            // Limpeza agressiva entre chunks
+            $.gc(); $.gc();
+            $.sleep(30);
+        }
+        
+        // Escreve arquivo de forma mais segura
+        try {
             saveFile.encoding = "UTF-8";
-            saveFile.lineFeed = "Unix"; // Força quebra de linha Unix
+            saveFile.lineFeed = "Unix";
             saveFile.open("w");
             
-            // Escreve BOM UTF-8 manualmente para garantir compatibilidade
+            // Escreve BOM UTF-8
             saveFile.write("\uFEFF");
             
-            // Arrays para armazenar nomes das variáveis e conteúdos
-            var variableNames = [];
-            var variableContents = [];
-            
-            // Função para limpar e formatar texto para CSV preservando acentos E QUEBRAS DE LINHA
-            function formatForCSV(text) {
-                if (!text) return '""';
-                // Converte para string se necessário
-                text = String(text);
-                // PRESERVA quebras de linha convertendo para \n
-                text = text.replace(/\r\n/g, "\\n"); // Windows line breaks
-                text = text.replace(/\r/g, "\\n");   // Mac line breaks  
-                text = text.replace(/\n/g, "\\n");   // Unix line breaks
-                // Remove tabs mas preserva quebras de linha
-                text = text.replace(/\t/g, " ");
-                // Remove espaços duplos mas preserva quebras de linha
-                text = text.replace(/ +/g, " ");
-                // Remove espaços no início e fim de cada linha
-                text = text.replace(/^ +| +$/gm, "");
-                // Escapa aspas duplas duplicando-as (padrão CSV)
-                text = text.replace(/"/g, '""');
-                return '"' + text + '"'; // Envolve em aspas duplas
-            }
-            
-            // Processa os dados para extrair conteúdos
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i];
-                
-                // Nome fixo da variável usando o prefixo configurado
-                variableNames.push('"' + variablePrefix + (i + 1) + '"');
-                
-                // Conteúdo: usa o texto após processamento (ou original se não houver)
-                var content = "";
-                if (item.postData && item.postData.currentText) {
-                    content = item.postData.currentText;
-                } else if (item.preData && item.preData.originalText) {
-                    content = item.preData.originalText;
-                }
-                variableContents.push(formatForCSV(content));
-            }
-            
-            // Escreve o cabeçalho (nomes fixos das variáveis)
+            // Escreve cabeçalho
             saveFile.writeln(variableNames.join(","));
             
-            // Escreve a linha de conteúdo
+            // Escreve conteúdo
             saveFile.writeln(variableContents.join(","));
             
             saveFile.close();
             
-            // Tenta verificar se os acentos foram salvos corretamente
-            try {
-                var testFile = new File(saveFile.fsName);
-                testFile.encoding = "UTF-8";
-                testFile.open("r");
-                var content = testFile.read();
-                testFile.close();
-                
-                // Se não há acentos no conteúdo, tenta reescrever com codificação alternativa
-                if (content.indexOf("ção") === -1 && content.indexOf("ã") === -1 && content.indexOf("é") === -1) {
-                    // Reescreve com codificação padrão do sistema
-                    saveFile.encoding = "BINARY";
-                    saveFile.open("w");
-                    saveFile.writeln(variableNames.join(","));
-                    saveFile.writeln(variableContents.join(","));
-                    saveFile.close();
-                }
-            } catch (testError) {
-                // Ignora erro de teste, arquivo já foi salvo
-            }
+            // Limpeza final
+            $.gc(); $.gc();
             
-            alert("Arquivo CSV exportado com sucesso!\nLocal: " + saveFile.fsName + "\n\nSe os acentos não aparecerem corretamente, abra o arquivo no Excel e escolha 'UTF-8' na importação.");
+            alert("Arquivo CSV exportado com sucesso!\nLocal: " + saveFile.fsName + "\n\nForam processadas " + totalItems + " variáveis.");
+            
+        } catch (writeError) {
+            alert("Erro ao escrever arquivo CSV: " + writeError);
         }
+        
     } catch (e) {
         alert("Erro ao exportar CSV: " + e);
+        // Limpeza de emergência
+        try { $.gc(); $.gc(); $.gc(); } catch (gcError) {}
+    }
+}
+
+// Função de formatação CSV simplificada para economizar memória
+function formatForCSVSimple(text) {
+    if (!text) return '""';
+    
+    try {
+        // Converte para string de forma segura
+        text = String(text);
+        
+        // Limite de tamanho para evitar travamento (máximo 500 caracteres)
+        if (text.length > 500) {
+            text = text.substring(0, 500) + "...";
+        }
+        
+        // PRESERVA quebras de linha (versão otimizada)
+        text = text.replace(/\r\n/g, "\\n").replace(/\r/g, "\\n").replace(/\n/g, "\\n");
+        
+        // Limpeza básica
+        text = text.replace(/\t/g, " ").replace(/ +/g, " ").replace(/^ +| +$/gm, "");
+        
+        // Escapa aspas
+        text = text.replace(/"/g, '""');
+        
+        return '"' + text + '"';
+    } catch (formatError) {
+        return '""';
     }
 }
