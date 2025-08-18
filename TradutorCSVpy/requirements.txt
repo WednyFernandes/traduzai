@@ -1,2 +1,4 @@
 googletrans==4.0.0rc1
+pyinstaller>=5.0
+tkinter
 argparse
