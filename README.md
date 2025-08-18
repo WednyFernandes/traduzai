@@ -43,9 +43,9 @@ This script provides a modern graphical interface for automating the process of 
 ## 📋 Requirements
 
 ### Adobe Illustrator Versions
-- ⚠️ **Adobe Illustrator 2023** (may work, not tested)
-- ⚠️ **Adobe Illustrator 2024** (may work, not tested)
 - ✅ **Adobe Illustrator 2025** (tested)
+- ⚠️ **Adobe Illustrator 2024** (may work, not tested)
+- ⚠️ **Adobe Illustrator 2023** (may work, not tested)
 - ⚠️ **Adobe Illustrator 2022** (may work, not tested)
 - ❌ **Adobe Illustrator 2021 or older** (not supported)
 
@@ -102,17 +102,26 @@ Create an action with your desired name:
 8. Choose CSV export when processing completes
 
 ### Step 4: Translation Workflow
+
+#### Method 1: Using Google Sheets (Recommended)
 1. **Export CSV**: Export your processed variables to CSV format
-2. **Translate the CSV**: Use an AI (e.g., ChatGPT) to translate and localize the CSV for your target language, keeping the CSV line formatting. Example prompt:
+2. **Open in Google Sheets**: Import the CSV file into Google Sheets
+3. **Add translation rows**: Create new rows below the original content for each target language
+4. **Use Google Translate**: Utilize Google Sheets' built-in Google Translate function for each target language column
+5. **Handle line breaks**: After translation, replace all `\n` characters with `^n` in the translated content (this is required for Illustrator compatibility)
+   - You can do this in Google Sheets using Find & Replace: Find `\n` and replace with `^n`
+   - Alternatively, use Illustrator's Find & Replace feature after importing
+6. **Export translated CSV**: Download the completed CSV with all language versions
 
-   > Translate and localize the following CSV content to [target language], keeping the CSV line formatting exactly as provided.
+#### Method 2: Using AI Translation
+1. **Export CSV**: Export your processed variables to CSV format  
+2. **Translate with AI**: Use an AI service (e.g., ChatGPT) to translate and localize the CSV for your target language, keeping the CSV line formatting. Example prompt:
 
-3. **Load variable library**: Load the translated CSV as your variable library and select the desired dataset for your document.
+   > Translate and localize the following CSV content to [target language], keeping the CSV line formatting exactly as provided. Replace any \n line breaks with ^n for Illustrator compatibility.
+
+#### Final Steps
+3. **Load variable library**: Load the translated CSV as your variable library and select the desired dataset for your document
 4. **Apply translations**: Use Illustrator's variables panel to apply translations
-
-   > Translate and localize the following CSV content to [target language], keeping the CSV line formatting exactly as provided.
-
-7. **Load variable library**: Load the translated CSV as your variable library and select the desired dataset for your document.
 
 ## 📊 CSV Output Format
 
@@ -148,7 +157,11 @@ The script generates a CSV file with this structure:
    - ❌ **Cause**: CSV opened without UTF-8 encoding
    - ✅ **Solution**: Import CSV in Excel choosing UTF-8 encoding
 
-5. **Script freezes on large selections**
+5. **Line breaks not working in Illustrator**
+   - ❌ **Cause**: Standard `\n` line breaks don't work in Illustrator variables
+   - ✅ **Solution**: Replace `\n` with `^n` in your translated content. Use Find & Replace in Google Sheets or Illustrator
+
+6. **Script freezes on large selections**
    - ❌ **Cause**: Too many objects selected
    - ✅ **Solution**: Process in smaller batches (50-100 objects max)
 
@@ -161,7 +174,7 @@ The script generates a CSV file with this structure:
 ## 🔧 Configuration
 
 ### Language Configuration
-Edit the configuration variables at the top of `CreateTextVariables.jsx`:
+Edit the configuration variables at the top of `TraduzAI.jsx`:
 
 ```javascript
 // Your action name (must match exactly)
