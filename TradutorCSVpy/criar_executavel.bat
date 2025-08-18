@@ -55,28 +55,31 @@ if errorlevel 1 (
 echo ✅ Dependências verificadas
 echo.
 
-REM Limpar builds anteriores
-if exist "build" (
-    echo 🧹 Limpando build anterior...
-    rmdir /s /q "build"
+REM Criar pasta temporária na área de trabalho
+set "TEMP_DIR=%USERPROFILE%\Desktop\TraduzAI-Build"
+echo 📁 Criando pasta temporária: %TEMP_DIR%
+
+if exist "%TEMP_DIR%" (
+    echo 🧹 Limpando pasta anterior...
+    rmdir /s /q "%TEMP_DIR%"
 )
 
-if exist "dist" (
-    echo 🧹 Limpando dist anterior...
-    rmdir /s /q "dist"
-)
+mkdir "%TEMP_DIR%"
 
-if exist "*.spec" (
-    echo 🧹 Limpando arquivos spec...
-    del /q "*.spec"
-)
+REM Copiar arquivo necessário para pasta temporária
+echo 📋 Copiando arquivos...
+copy "tradutor_csv_gui.py" "%TEMP_DIR%\"
+if exist "translation_config.json" copy "translation_config.json" "%TEMP_DIR%\"
+
+REM Entrar na pasta temporária
+cd /d "%TEMP_DIR%"
 
 echo.
 echo 🔨 Criando executável...
 echo ⏳ Isso pode levar alguns minutos...
 echo.
 
-REM Criar executável
+REM Criar executável na pasta temporária
 pyinstaller --onefile --windowed --name=TraduzAI-CSV --hidden-import=googletrans --hidden-import=tkinter --clean tradutor_csv_gui.py
 
 if errorlevel 1 (
@@ -90,33 +93,47 @@ if errorlevel 1 (
 echo.
 echo ✅ Executável criado com sucesso!
 echo.
-echo 📁 Localização: %CD%\dist\TraduzAI-CSV.exe
+echo 📁 Localização: %TEMP_DIR%\dist\TraduzAI-CSV.exe
 echo 📏 Tamanho: 
-for %%I in ("dist\TraduzAI-CSV.exe") do echo    %%~zI bytes
+for %%I in ("%TEMP_DIR%\dist\TraduzAI-CSV.exe") do echo    %%~zI bytes
+
+REM Copiar executável para área de trabalho
+echo.
+echo 📋 Copiando executável para área de trabalho...
+copy "%TEMP_DIR%\dist\TraduzAI-CSV.exe" "%USERPROFILE%\Desktop\"
 
 echo.
 echo 🎉 PROCESSO CONCLUÍDO!
 echo.
 echo 💡 Informações importantes:
-echo    • O executável está na pasta 'dist'
+echo    • O executável está na área de trabalho
+echo    • Arquivo: TraduzAI-CSV.exe
 echo    • Pode ser distribuído independentemente
 echo    • Não requer Python no computador de destino
 echo    • Funciona no Windows 7, 8, 10 e 11
 echo.
 
-REM Oferecer para abrir a pasta
-set /p open_folder="🚀 Deseja abrir a pasta dist? (s/n): "
-if /i "%open_folder%"=="s" (
-    start "" "dist"
+REM Oferecer para abrir a área de trabalho
+set /p open_desktop="🚀 Deseja abrir a área de trabalho? (s/n): "
+if /i "%open_desktop%"=="s" (
+    start "" "%USERPROFILE%\Desktop"
 )
 
 echo.
 echo 📋 Para testar:
-echo    1. Vá para a pasta dist
+echo    1. Vá para a área de trabalho
 echo    2. Execute TraduzAI-CSV.exe
 echo    3. Selecione um arquivo CSV
 echo    4. Configure os idiomas
 echo    5. Clique em 'Iniciar Tradução'
 echo.
+
+REM Limpar pasta temporária (opcional)
+set /p clean_temp="🧹 Deseja limpar pasta temporária? (s/n): "
+if /i "%clean_temp%"=="s" (
+    cd /d "%USERPROFILE%"
+    rmdir /s /q "%TEMP_DIR%"
+    echo ✅ Pasta temporária limpa
+)
 
 pause

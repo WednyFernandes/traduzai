@@ -40,6 +40,10 @@ class TranslationConfig:
     preserve_urls: bool = True
     preserve_emails: bool = True
     max_retries: int = 3
+    # Novas opções para tratamento de números/moeda
+    number_treatment: str = 'preserve'  # 'preserve', 'convert_currency', 'change_symbol'
+    source_currency_symbol: str = 'R$'
+    target_currency_symbol: str = '$'
 
 class CSVTranslatorGUI:
     """Interface gráfica para tradução de CSV"""
@@ -62,9 +66,12 @@ class CSVTranslatorGUI:
         self.preserve_numbers = tk.BooleanVar(value=True)
         self.preserve_urls = tk.BooleanVar(value=True)
         self.preserve_emails = tk.BooleanVar(value=True)
-        self.convert_currency = tk.BooleanVar(value=False)
-        self.currency_symbol = tk.StringVar(value="$")
+        
+        # Novas opções para tratamento de números/moeda
+        self.number_treatment = tk.StringVar(value='preserve')  # 'preserve', 'convert_currency', 'change_symbol'
         self.currency_rate = tk.DoubleVar(value=1.0)
+        self.source_currency_symbol = tk.StringVar(value="R$")
+        self.target_currency_symbol = tk.StringVar(value="$")
         
         # Queue para comunicação entre threads
         self.progress_queue = queue.Queue()
@@ -148,23 +155,41 @@ class CSVTranslatorGUI:
         advanced_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
         # Checkboxes para preservação
-        ttk.Checkbutton(advanced_frame, text="Preservar números", 
-                       variable=self.preserve_numbers).grid(row=0, column=0, sticky=tk.W)
         ttk.Checkbutton(advanced_frame, text="Preservar URLs", 
-                       variable=self.preserve_urls).grid(row=0, column=1, sticky=tk.W)
+                       variable=self.preserve_urls).grid(row=0, column=0, sticky=tk.W)
         ttk.Checkbutton(advanced_frame, text="Preservar emails", 
-                       variable=self.preserve_emails).grid(row=0, column=2, sticky=tk.W)
+                       variable=self.preserve_emails).grid(row=0, column=1, sticky=tk.W)
         
-        # Configurações de moeda
-        currency_frame = ttk.Frame(advanced_frame)
-        currency_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0))
+        # Configurações de números/moeda
+        number_frame = ttk.LabelFrame(advanced_frame, text="Tratamento de Números e Moeda", padding="10")
+        number_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0))
+        number_frame.columnconfigure(1, weight=1)
         
-        ttk.Checkbutton(currency_frame, text="Converter moeda", 
-                       variable=self.convert_currency).grid(row=0, column=0, sticky=tk.W)
-        ttk.Label(currency_frame, text="Símbolo:").grid(row=0, column=1, sticky=tk.W, padx=(20, 5))
-        ttk.Entry(currency_frame, textvariable=self.currency_symbol, width=5).grid(row=0, column=2, sticky=tk.W)
-        ttk.Label(currency_frame, text="Taxa:").grid(row=0, column=3, sticky=tk.W, padx=(20, 5))
-        ttk.Entry(currency_frame, textvariable=self.currency_rate, width=10).grid(row=0, column=4, sticky=tk.W)
+        # Opções de tratamento
+        ttk.Label(number_frame, text="Ação para números:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        
+        treatment_frame = ttk.Frame(number_frame)
+        treatment_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        
+        ttk.Radiobutton(treatment_frame, text="Não fazer nada (preservar)", 
+                       variable=self.number_treatment, value='preserve').grid(row=0, column=0, sticky=tk.W)
+        ttk.Radiobutton(treatment_frame, text="Converter moeda com símbolo do idioma destino", 
+                       variable=self.number_treatment, value='convert_currency').grid(row=1, column=0, sticky=tk.W)
+        ttk.Radiobutton(treatment_frame, text="Não converter, mas trocar símbolo da moeda", 
+                       variable=self.number_treatment, value='change_symbol').grid(row=2, column=0, sticky=tk.W)
+        
+        # Configurações de símbolos e taxa
+        symbol_frame = ttk.Frame(number_frame)
+        symbol_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(10, 0))
+        
+        ttk.Label(symbol_frame, text="Símbolo origem:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
+        ttk.Entry(symbol_frame, textvariable=self.source_currency_symbol, width=8).grid(row=0, column=1, sticky=tk.W, padx=(0, 20))
+        
+        ttk.Label(symbol_frame, text="Símbolo destino:").grid(row=0, column=2, sticky=tk.W, padx=(0, 5))
+        ttk.Entry(symbol_frame, textvariable=self.target_currency_symbol, width=8).grid(row=0, column=3, sticky=tk.W, padx=(0, 20))
+        
+        ttk.Label(symbol_frame, text="Taxa conversão:").grid(row=0, column=4, sticky=tk.W, padx=(0, 5))
+        ttk.Entry(symbol_frame, textvariable=self.currency_rate, width=10).grid(row=0, column=5, sticky=tk.W)
         
         # Arquivo de saída
         ttk.Label(main_frame, text="Arquivo de Saída:").grid(row=4, column=0, sticky=tk.W, pady=5)
@@ -319,16 +344,18 @@ class CSVTranslatorGUI:
     def translate_csv(self):
         """Função de tradução executada em thread separada"""
         try:
-            # Configurar tradutor
+            # Configurar tradutor - CORREÇÃO: usar .get() nas variáveis BooleanVar
             config = TranslationConfig(
                 source_language=self.source_lang.get().split(' - ')[0] if ' - ' in self.source_lang.get() else self.source_lang.get(),
                 target_language=self.target_lang.get().split(' - ')[0] if ' - ' in self.target_lang.get() else self.target_lang.get(),
-                currency_symbol=self.currency_symbol.get(),
-                convert_currency=self.convert_currency.get(),
-                currency_conversion_rate=self.currency_rate.get(),
-                preserve_numbers=self.preserve_numbers.get(),
-                preserve_urls=self.preserve_urls.get(),
-                preserve_emails=self.preserve_emails.get()
+                preserve_numbers=self.preserve_numbers.get(),  # .get() para BooleanVar
+                preserve_urls=self.preserve_urls.get(),        # .get() para BooleanVar
+                preserve_emails=self.preserve_emails.get(),     # .get() para BooleanVar
+                # Novas configurações
+                number_treatment=self.number_treatment.get(),
+                source_currency_symbol=self.source_currency_symbol.get(),
+                target_currency_symbol=self.target_currency_symbol.get(),
+                currency_conversion_rate=self.currency_rate.get()
             )
             
             self.progress_queue.put({'type': 'log', 'value': f'Iniciando tradução de {config.source_language} para {config.target_language}'})
@@ -387,7 +414,7 @@ class CSVTranslatorGUI:
             if not text_str:
                 return text_str
             
-            # Preservar elementos
+            # Preservar elementos (agora inclui processamento de moeda)
             clean_text, placeholders = self.preserve_elements(text_str, config)
             
             # Detectar padrão de caixa
@@ -405,12 +432,8 @@ class CSVTranslatorGUI:
             # Aplicar padrão de caixa
             translated = self.apply_case_pattern(translated, case_pattern)
             
-            # Restaurar elementos
+            # Restaurar elementos (já processados na preserve_elements)
             translated = self.restore_elements(translated, placeholders)
-            
-            # Converter moeda se necessário
-            if config.convert_currency:
-                translated = self.convert_currency(translated, config)
                 
             return translated
             
@@ -427,7 +450,8 @@ class CSVTranslatorGUI:
         patterns = {
             'url': re.compile(r'https?://[^\s<>"]+|www\.[^\s<>"]+', re.IGNORECASE),
             'email': re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
-            'number': re.compile(r'\b\d+(?:[,\.]\d+)*\b')
+            'number': re.compile(r'\b\d+(?:[,\.]\d+)*\b'),
+            'currency': re.compile(r'(\d+(?:[,\.]\d+)*(?:[,\.]\d{2})?)\s*(?:R\$|BRL|reais?|USD|\$|€|EUR)', re.IGNORECASE)
         }
         
         # Preservar URLs
@@ -446,8 +470,35 @@ class CSVTranslatorGUI:
                 modified_text = modified_text.replace(match.group(), placeholder)
                 counter += 1
         
-        # Preservar números
-        if config.preserve_numbers:
+        # Tratar números/moeda baseado na configuração
+        if config.number_treatment == 'preserve':
+            # Preservar números como antes
+            if config.preserve_numbers:
+                for match in patterns['number'].finditer(modified_text):
+                    if not any(match.group() in value for value in placeholders.values()):
+                        placeholder = f"__NUMBER_{counter}__"
+                        placeholders[placeholder] = match.group()
+                        modified_text = modified_text.replace(match.group(), placeholder)
+                        counter += 1
+        
+        elif config.number_treatment in ['convert_currency', 'change_symbol']:
+            # Identificar valores monetários e preservá-los para processamento posterior
+            for match in patterns['currency'].finditer(modified_text):
+                placeholder = f"__CURRENCY_{counter}__"
+                original_value = match.group()
+                
+                if config.number_treatment == 'convert_currency':
+                    # Converter valor e trocar símbolo
+                    processed_value = self.process_currency_conversion(original_value, config)
+                elif config.number_treatment == 'change_symbol':
+                    # Apenas trocar símbolo sem converter
+                    processed_value = self.process_currency_symbol_change(original_value, config)
+                
+                placeholders[placeholder] = processed_value
+                modified_text = modified_text.replace(original_value, placeholder)
+                counter += 1
+            
+            # Preservar números não monetários
             for match in patterns['number'].finditer(modified_text):
                 if not any(match.group() in value for value in placeholders.values()):
                     placeholder = f"__NUMBER_{counter}__"
@@ -488,22 +539,54 @@ class CSVTranslatorGUI:
             restored_text = restored_text.replace(placeholder, str(original_value))
         return restored_text
         
-    def convert_currency(self, text, config):
-        """Converte valores monetários"""
-        text_str = str(text)  # Garantir que é string
-        currency_pattern = re.compile(r'(\d+(?:[,\.]\d+)*(?:[,\.]\d{2})?)\s*(?:R\$|BRL|reais?)?', re.IGNORECASE)
+    def process_currency_conversion(self, currency_text, config):
+        """Processa conversão de moeda com nova taxa e símbolo"""
+        # Padrão para extrair valor numérico
+        number_pattern = re.compile(r'(\d+(?:[,\.]\d+)*(?:[,\.]\d{2})?)')
         
-        def currency_replacer(match):
+        match = number_pattern.search(currency_text)
+        if match:
             value_str = match.group(1)
-            # Normalizar e converter
+            # Normalizar formato (converter vírgula para ponto)
             normalized = value_str.replace(',', '.')
+            
             try:
-                value = float(normalized) * config.currency_conversion_rate
-                return f"{config.currency_symbol}{value:.2f}"
-            except ValueError:
-                return match.group(0)
+                value = float(normalized)
+                converted_value = value * config.currency_conversion_rate
                 
-        return currency_pattern.sub(currency_replacer, text_str)
+                # Formatar com o símbolo de destino
+                if config.target_currency_symbol in ['$', 'USD']:
+                    return f"${converted_value:.2f}"
+                elif config.target_currency_symbol in ['€', 'EUR']:
+                    return f"€{converted_value:.2f}"
+                else:
+                    return f"{config.target_currency_symbol}{converted_value:.2f}"
+                    
+            except ValueError:
+                # Se não conseguir converter, apenas troca símbolo
+                return self.process_currency_symbol_change(currency_text, config)
+        
+        return currency_text
+    
+    def process_currency_symbol_change(self, currency_text, config):
+        """Processa apenas troca de símbolo sem conversão de valor"""
+        # Substituir símbolos conhecidos
+        symbol_replacements = {
+            'R$': config.target_currency_symbol,
+            'BRL': config.target_currency_symbol,
+            'reais': config.target_currency_symbol,
+            'real': config.target_currency_symbol,
+            '$': config.target_currency_symbol,
+            'USD': config.target_currency_symbol,
+            '€': config.target_currency_symbol,
+            'EUR': config.target_currency_symbol
+        }
+        
+        result = currency_text
+        for old_symbol, new_symbol in symbol_replacements.items():
+            result = re.sub(r'\b' + re.escape(old_symbol) + r'\b', new_symbol, result, flags=re.IGNORECASE)
+        
+        return result
 
 def main():
     """Função principal"""
