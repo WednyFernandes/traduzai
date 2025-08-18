@@ -1,0 +1,11 @@
+{
+  "source_language": "pt",
+  "target_language": "en",
+  "currency_symbol": "$",
+  "convert_currency": false,
+  "currency_conversion_rate": 5.5,
+  "preserve_numbers": true,
+  "preserve_urls": true,
+  "preserve_emails": true,
+  "max_retries": 3
+}
