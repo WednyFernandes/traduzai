@@ -94,6 +94,8 @@ to a UTF-8 `.csv` through `File.saveDialog`.
 ```
 TraduzAI.jsx           # the script: UI, batch processing, CSV export
 LANGUAGE-CONFIG.md     # Illustrator Action Set names per language
+TradutorCSVpy/         # legacy Python component with its own docs; not part
+                       # of the script's flow and not documented here
 ```
 
 ## Status

@@ -92,6 +92,8 @@ variáveis já criadas no documento), gravado num `.csv` em UTF-8 através de
 ```
 TraduzAI.jsx          # o script: interface, processamento em lote, export CSV
 LANGUAGE-CONFIG.md     # nomes de Action Set por idioma do Illustrator
+TradutorCSVpy/         # componente Python legado, com docs próprias; não faz
+                       # parte do fluxo do script e não é documentado aqui
 ```
 
 ## Estado
