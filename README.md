@@ -41,7 +41,8 @@ Testado no Adobe Illustrator 2025.
 ## Como funciona
 
 O script usa `ScriptUI` para a interface e processa os objetos selecionados
-em lotes de 10, rodando a Action informada sobre cada um via
+em pequenos lotes (o tamanho é uma constante no código, hoje 2 objetos por vez —
+valor baixo de propósito para não travar máquinas fracas), rodando a Action informada sobre cada um via
 `app.doScript`; cada resultado é coletado e, ao final (ou pelo botão
 "Exportar CSV Existente", que varre as variáveis já criadas no documento),
 gravado num `.csv` em UTF-8 através de `File.saveDialog`.

@@ -41,7 +41,9 @@ Tested on Adobe Illustrator 2025.
 ## How it works
 
 The script uses `ScriptUI` for the interface and processes the selected
-objects in batches of 10, running the given Action on each one via
+objects in small batches (the size is a constant in the code, currently 2 objects
+at a time — kept low on purpose to avoid freezing weaker machines), running the
+given Action on each one via
 `app.doScript`; each result is collected and, at the end (or via the
 "Export Existing CSV" button, which scans the variables already created in
 the document), written to a `.csv` file in UTF-8 through `File.saveDialog`.
