@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* Edit ACCENT per repo. Keep 1280x640 (also valid as GitHub social preview). */
+  :root { --bg:#0d1117; --grid:rgba(255,255,255,.035); --fg:#e6edf3; --muted:#8b949e; --card:#161b22; --line:#30363d; --accent:#ff9a00; }
+  * { margin:0; box-sizing:border-box; }
+  body { width:1280px; height:640px; overflow:hidden; background:var(--bg); color:var(--fg); font-family:Inter,sans-serif;
+    background-image:radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 40%),
+      linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:auto, 32px 32px, 32px 32px; display:flex; align-items:center; gap:56px; padding:0 72px; }
+  .left { flex:1.1; }
+  .kicker { font-family:"JetBrains Mono",monospace; color:var(--accent); font-size:19px; margin-bottom:18px; }
+  h1 { font-weight:800; font-size:84px; line-height:.98; letter-spacing:-3px; }
+  h1 em { font-style:normal; color:var(--accent); }
+  p { color:var(--muted); font-size:25px; line-height:1.4; margin-top:22px; max-width:520px; }
+  .tags { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+  .tags span { font-family:"JetBrains Mono",monospace; font-size:15px; border:1px solid var(--line); background:var(--card); border-radius:999px; padding:8px 13px; }
+  .card { flex:1; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:30px; font-family:"JetBrains Mono",monospace; font-size:16px; line-height:1.9; }
+  .card b { color:var(--fg); } .card .k { color:var(--muted); } .card .a { color:var(--accent); }
+  .card hr { border:0; border-top:1px dashed var(--line); margin:14px 0; }
+</style></head>
+<body>
+  <div class="left">
+    <div class="kicker">// ADOBE ILLUSTRATOR · EXTENDSCRIPT</div>
+    <h1>Traduz<em>AI</em></h1>
+    <p>Batch-create text variables in Illustrator and export a CSV ready for translation.</p>
+    <div class="tags"><span>illustrator</span><span>text variables</span><span>csv</span><span>localization</span><span>jsx</span></div>
+  </div>
+  <div class="card">
+    <b>File &gt; Scripts &gt; TraduzAI</b><br>
+    <span class="k">action:</span> <span class="a">setvar</span> &nbsp;<span class="k">prefix:</span> <span class="a">Variável</span><br>
+    <span class="k">[START]</span> Processando 40 de 40...<hr>
+    <span class="k">variables.csv</span><br>
+    "Variável1","Variável2"<br>
+    <span class="k">pt</span> "Sabor sofisticado","Pratos"<br>
+    <span class="k">en</span> <span class="a">"Sophisticated flavor","Dishes"</span>
+  </div>
+</body></html>

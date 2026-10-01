@@ -1,0 +1,20 @@
+# traduzai
+
+> TraduzAI is an Adobe Illustrator ExtendScript (TraduzAI.jsx) with a ScriptUI panel that runs a user-recorded "Make Text Dynamic" Action in batches over selected text objects, turning them into Illustrator variables, and exports the texts to a UTF-8 CSV. The CSV is translated (Google Sheets, AI or a translator) and loaded back as an Illustrator variable library to switch languages. For designers localizing artwork; requires Illustrator 2023+.
+
+## Files
+- [TraduzAI.jsx](https://github.com/WednyFernandes/traduzai/blob/main/TraduzAI.jsx): the script (UI, batch processing, CSV export)
+- [LANGUAGE-CONFIG.md](https://github.com/WednyFernandes/traduzai/blob/main/LANGUAGE-CONFIG.md): Action set names per Illustrator language
+- [README](https://github.com/WednyFernandes/traduzai/blob/main/README.md): install, usage, translation workflow, FAQ
+- [README-ptBR.md](https://github.com/WednyFernandes/traduzai/blob/main/README-ptBR.md): Portuguese documentation
+
+## Key facts
+- Install: copy TraduzAI.jsx to Illustrator's Presets/[language]/Scripts folder, run via File > Scripts > TraduzAI
+- Settings: ACTION_NAME (default setvar), ACTION_SET (default "Ações Padrão"), VARIABLE_PREFIX (default "Variável"), editable in the panel
+- Processes at most 2 objects per batch; warns above 50 selected objects and above 100
+- Optional automatic backup saves a -backup.ai copy before processing
+- "Exportar CSV Existente" exports variables already in the document
+- CSV: header row of variable names, then one row per language; use ^n for line breaks
+- It does not translate text and cannot create the Action itself
+- TradutorCSVpy/ is a separate legacy Python CSV translator
+- License: MIT. Author: Wedny Fernandes (github.com/WednyFernandes)

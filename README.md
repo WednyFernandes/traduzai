@@ -12,96 +12,118 @@ tags: [illustrator, extendscript]
 license: MIT
 ---
 
-# TraduzAI
+# TraduzAI: Adobe Illustrator script to batch-create text variables and export CSV for translation
 
-> Automatiza variáveis de texto no Illustrator e exporta CSV pra fluxo de tradução.
+![TraduzAI: Adobe Illustrator ExtendScript that turns text objects into variables and exports a CSV for translation and localization](assets/hero.png)
 
-![Illustrator](https://img.shields.io/badge/Illustrator-2023+-FF9A00?logo=adobeillustrator&logoColor=white)
-![ExtendScript](https://img.shields.io/badge/ExtendScript-JSX-FF9A00)
-![Status](https://img.shields.io/badge/status-no%20ar-3fb950)
-![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-0969da)
+**TraduzAI** is an Adobe Illustrator script (ExtendScript `.jsx` with a ScriptUI panel) for designers who localize artwork: it runs your "make text dynamic" Action in batches over the selected text objects, then exports every text to a UTF-8 CSV that you translate and load back as an Illustrator variable library.
 
-## O que é
+Turning each text in a piece into an Illustrator variable by hand, one at a time, is slow and repetitive. TraduzAI does it for the whole selection, with a progress bar and a cancel button, and builds the CSV for you.
 
-Transformar cada texto de uma peça em variável do Illustrator, um por um,
-pra depois traduzir, é trabalho repetitivo. O `TraduzAI.jsx` é um script com
-interface (ScriptUI) que roda uma Action do Illustrator em lote sobre os
-objetos de texto selecionados, com barra de progresso e cancelamento, e no
-final exporta os textos coletados num CSV pronto pra mandar pra tradução.
+> Illustrator text variables · Illustrator translation script · export Illustrator text to CSV · multilingual design · localization workflow · Make Text Dynamic · data sets · ExtendScript JSX
 
-## Stack
+## Features
 
-| Tecnologia | Versão | Para quê |
-|---|---|---|
-| Adobe Illustrator | 2023+ | Ambiente de execução do script (`package.json` declara `"illustrator": ">=2023"`) |
-| ExtendScript (JSX) | — | Linguagem do script, roda dentro do próprio Illustrator |
+- **Batch Action runner.** Runs a named Action on every selected object through `app.doScript`.
+- **CSV export.** Writes a UTF-8 (with BOM) CSV: one header row of variable names (`Variável1`, `Variável2`...) and one row with the original text.
+- **Export existing variables.** The **Exportar CSV Existente** button scans the variables already in the document and exports them.
+- **Progress and cancel.** Live progress bar, cancel button, and a timeout prompt for long runs.
+- **Safe on weak machines.** Processes at most 2 objects per batch with pauses between batches. Warns above 50 selected objects and asks again above 100.
+- **Automatic backup.** Optional checkbox (on by default) that saves a `-backup.ai` copy before processing.
+- **Any Illustrator language.** Action name, Action set and variable prefix are editable in the panel. See [LANGUAGE-CONFIG.md](LANGUAGE-CONFIG.md) for Action set names per language.
 
-## Requisitos
+## Requirements
 
-- Adobe Illustrator 2023 ou mais recente (testado até a versão 2025)
-- Uma Action do Illustrator já criada, que converta texto selecionado em variável
+- Adobe Illustrator 2023 or newer (`package.json` declares `"illustrator": ">=2023"`; tested up to 2025)
+- An Illustrator Action that converts the selected text into a variable
 
-## Instalação
+## Install
 
-1. Copie `TraduzAI.jsx` para a pasta de Scripts do Illustrator:
-   `Presets/[idioma]/Scripts/`
-2. Reinicie o Illustrator (ou abra o menu **File > Scripts** de novo) pra ele
-   aparecer na lista.
+1. Copy `TraduzAI.jsx` into Illustrator's Scripts folder:
+   - Windows: `C:\Program Files\Adobe\Adobe Illustrator [version]\Presets\[language]\Scripts\`
+   - macOS: `/Applications/Adobe Illustrator [version]/Presets/[language]/Scripts/`
+2. Restart Illustrator so it appears under **File > Scripts**.
 
-## Como usar
+## Usage
 
-1. Crie no Illustrator uma Action que converte o texto selecionado em
-   variável (Window > Actions, gravar: Window > Variables > "Make Text
-   Dynamic").
-2. Selecione os objetos de texto no documento e rode
-   **File > Scripts > TraduzAI**.
-3. Informe na interface o nome da Action, o conjunto de Actions e o prefixo
-   das variáveis, clique **START** e acompanhe o progresso.
-4. Ao final, exporte o CSV com os textos coletados.
+1. **Create the Action** once: open **Window > Actions**, create an Action (for example `setvar`), and record **Window > Variables > Make Text Dynamic** on a selected text object. Stop recording.
+2. Open your document. Ungroup text if needed; ungrouped objects process more reliably.
+3. Select the text objects and run **File > Scripts > TraduzAI**.
+4. In the panel, set the Action name, the Action set and the variable prefix, choose whether to back up, and click **START**.
+5. When processing finishes, accept the prompt to export the CSV.
 
 ```
-$ File > Scripts > TraduzAI
-> Nome da Action: setvar
-> Conjunto: Ações Padrão
-> Prefixo: Variável
+File > Scripts > TraduzAI
+> Action name: setvar
+> Action set:  Ações Padrão
+> Prefix:      Variável
 > START
 Processando 40 de 40...
 Processamento concluído! Ação 'setvar' executada para 40 objetos.
-Deseja exportar um arquivo CSV com os dados das variáveis? [Sim]
-Arquivo CSV exportado com sucesso!
+Export CSV? [Yes]  ->  CSV saved
 ```
 
-Não há flags de linha de comando — toda configuração é feita pela interface
-ScriptUI (nome da Action, conjunto de Actions e prefixo de variável, ver
-`ACTION_NAME`, `ACTION_SET` e `VARIABLE_PREFIX` no topo de `TraduzAI.jsx`).
+## Translation workflow
 
-## Como funciona
+1. Run the script on the source-language text and export the CSV.
+2. Add one new row per target language below the original row, keeping the header.
+3. Translate with Google Sheets (its built-in translate function) or with an AI assistant, keeping the CSV rows intact.
+4. Replace line breaks `\n` with `^n` in the translated text. Illustrator variables need `^n`.
+5. In Illustrator, load the translated CSV as a variable library and switch between data sets in the Variables panel to apply each language.
 
-O script usa `ScriptUI` para a interface e processa os objetos selecionados
-em lotes de no máximo 2 por vez (`Math.min(batchSize, 2)`, linha 192 de
-`TraduzAI.jsx` — valor travado no código, não configurável pela UI, de
-propósito para não travar máquinas fracas), rodando a Action informada sobre
-cada um via `app.doScript`. Acima de 50 objetos selecionados o script avisa
-antes de continuar, e acima de 100 pede confirmação extra. Cada resultado é
-coletado e, ao final (ou pelo botão "Exportar CSV Existente", que varre as
-variáveis já criadas no documento), gravado num `.csv` em UTF-8 através de
-`File.saveDialog`.
+CSV format:
 
-## Estrutura
-
-```
-TraduzAI.jsx          # o script: interface, processamento em lote, export CSV
-LANGUAGE-CONFIG.md     # nomes de Action Set por idioma do Illustrator
-TradutorCSVpy/         # componente Python legado, com docs próprias; não faz
-                       # parte do fluxo do script e não é documentado aqui
+```csv
+"Variável1","Variável2","Variável3"
+"Original text 1","Original text 2","Original text 3"
+"Translation 1","Translation 2","Translation 3"
 ```
 
-## Estado
+## Configuration
 
-Funciona o fluxo completo: rodar a Action em lote, exportar CSV, reimportar
-tradução como variável. Depende de a Action já existir no Illustrator antes
-de rodar o script — não há como criar a Action pelo próprio script.
+Defaults live at the top of `TraduzAI.jsx` and can also be changed in the panel:
 
-## Licença
+| Constant | Default | Meaning |
+|---|---|---|
+| `ACTION_NAME` | `setvar` | Exact name of your Action |
+| `ACTION_SET` | `Ações Padrão` | Action set name (e.g. `Default Actions` in English Illustrator) |
+| `VARIABLE_PREFIX` | `Variável` | Prefix for CSV column names, numbered automatically |
 
-MIT.
+The batch size limit of 2 (`Math.min(batchSize, 2)` in `TraduzAI.jsx`) is hardcoded on purpose and is not exposed in the UI.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "Action not found" | The Action name must match `ACTION_NAME` exactly |
+| "Action set not found" | Set `ACTION_SET` to the name used by your Illustrator language |
+| Accents look broken in Excel | Import the CSV choosing UTF-8 encoding |
+| Line breaks do not work in Illustrator | Replace `\n` with `^n` in the translated text |
+| Script freezes on large selections | Process smaller batches (50 to 100 objects) |
+
+## Project structure
+
+```
+TraduzAI.jsx          # the script: ScriptUI panel, batch processing, CSV export
+LANGUAGE-CONFIG.md    # Action set names and prefixes per Illustrator language
+README-ptBR.md        # Portuguese documentation
+TradutorCSVpy/        # legacy Python CSV translator (googletrans), separate docs, not part of the script flow
+```
+
+## FAQ
+
+**Can the script create the Action for me?**
+No. The Action must already exist in Illustrator before you run the script.
+
+**Does TraduzAI translate the text itself?**
+No. It prepares the variables and the CSV. You translate the CSV in a spreadsheet, with an AI assistant or with a translator, then load it back in Illustrator.
+
+**My Illustrator is in English. What do I change?**
+Set the Action set to `Default Actions` and, if you like, the prefix to `Variable`, either in the panel or at the top of `TraduzAI.jsx`.
+
+**How many objects can I process at once?**
+Any number, but the script recommends up to 50 per run on weaker machines and asks for confirmation above 50 and above 100.
+
+## License
+
+[MIT](LICENSE) © Wedny Fernandes
